@@ -240,6 +240,11 @@
   resolved "https://registry.yarnpkg.com/@braintree/sanitize-url/-/sanitize-url-7.1.2.tgz#ca2035b0fefe956a8676ff0c69af73e605fcd81f"
   integrity sha512-jigsZK+sMF/cuiB7sERuo9V7N9jx+dhmHHnQyDSVdpZwVutaBu7WvNYqMDLSgFgfB30n452TP3vjDAvFC973mA==
 
+"@capacitor/android@^8.1.0":
+  version "8.1.0"
+  resolved "https://registry.yarnpkg.com/@capacitor/android/-/android-8.1.0.tgz#c7952196d03cb02fd9fb64b6ad19dcb2b0450b81"
+  integrity sha512-z0acTPxj5DCy/U2FU7w+GA93oC+wdyKnsOcRg5rutDmSYa8Do1tzYqApKgf+hnuTNPbtrCTHp0Zy1cLiK/4MEw==
+
 "@capacitor/cli@^8.1.0":
   version "8.1.0"
   resolved "https://registry.yarnpkg.com/@capacitor/cli/-/cli-8.1.0.tgz#3ad7b2f18efabc6a214c628e39ff2dc5ca999b3c"
@@ -269,6 +274,11 @@
   integrity sha512-UfMBMWc1v7J+14AhH03QmeNwV3HZx3qnOWhpwnHfzALEwAwlV/itQOQqcasMQYhOHWL0tiymc5ByaLTn7KKQxw==
   dependencies:
     tslib "^2.1.0"
+
+"@capacitor/ios@^8.1.0":
+  version "8.1.0"
+  resolved "https://registry.yarnpkg.com/@capacitor/ios/-/ios-8.1.0.tgz#45f353a855ccff2adbded1de36b54d158bfcacdf"
+  integrity sha512-wPaQ8ayL0UY+SxydZbrmfzPs8TryZVEB6hrL/XBnXxQtb6rpEmIy/3GIltPwM+/T4m/IuaSDZOToWK65ruC00g==
 
 "@chevrotain/cst-dts-gen@11.1.1":
   version "11.1.1"

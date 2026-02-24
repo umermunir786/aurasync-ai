@@ -14,7 +14,9 @@ const config = defineConfig({
     contentCollections(),
     tsconfigPaths({ projects: ['./tsconfig.json'] }),
     tailwindcss(),
-    tanstackStart(),
+    tanstackStart({
+      prerender: { enabled: true },
+    }),
     viteReact(),
   ],
 })

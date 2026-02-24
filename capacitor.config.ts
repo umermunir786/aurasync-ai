@@ -3,7 +3,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.aurasync.app',
   appName: 'aurasync-ai',
-  webDir: 'dist'
+  webDir: 'dist/client'
 };
 
 export default config;
