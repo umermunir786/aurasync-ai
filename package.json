@@ -15,8 +15,10 @@
     "check": "prettier --write . && eslint --fix"
   },
   "dependencies": {
+    "@capacitor/android": "^8.1.0",
     "@capacitor/cli": "^8.1.0",
     "@capacitor/core": "^8.1.0",
+    "@capacitor/ios": "^8.1.0",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/ai": "latest",
     "@tanstack/ai-anthropic": "latest",

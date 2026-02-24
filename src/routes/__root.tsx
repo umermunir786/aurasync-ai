@@ -1,4 +1,9 @@
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
+import {
+  HeadContent,
+  Outlet,
+  Scripts,
+  createRootRoute,
+} from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 
@@ -27,8 +32,14 @@ export const Route = createRootRoute({
       },
     ],
   }),
+  component: RootComponent,
   shellComponent: RootDocument,
+  notFoundComponent: () => <div className="p-4 text-white">Route Not Found</div>,
 })
+
+function RootComponent() {
+  return <Outlet />
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
