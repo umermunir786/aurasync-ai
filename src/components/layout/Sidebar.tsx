@@ -12,7 +12,11 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isOpen: boolean;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const { logout } = useAuth();
 
   const navItems = [
@@ -25,7 +29,7 @@ const Sidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="w-64 h-screen glass border-r border-white/10 flex flex-col fixed left-0 top-0 z-50">
+    <aside className={`w-64 h-screen glass border-r border-white/10 flex flex-col fixed left-0 top-0 z-50 transition-transform duration-300 transform ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="p-6">
         <h1 className="text-2xl font-bold text-gradient">AuraSync AI</h1>
       </div>
@@ -49,10 +53,18 @@ const Sidebar: React.FC = () => {
       </nav>
 
       <div className="p-4 border-t border-white/10 space-y-2">
-        <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-all">
+        <NavLink 
+          to="/settings"
+          className={({ isActive }) => `
+            flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200
+            ${isActive 
+              ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30' 
+              : 'text-slate-400 hover:bg-white/5 hover:text-white'}
+          `}
+        >
           <Settings size={20} />
           <span className="font-medium">Settings</span>
-        </button>
+        </NavLink>
         <button 
           onClick={logout}
           className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all"

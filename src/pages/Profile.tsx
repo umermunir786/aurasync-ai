@@ -18,10 +18,52 @@ import {
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
+import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { ActionSheet, ActionSheetButtonStyle } from '@capacitor/action-sheet';
 
 const Profile: React.FC = () => {
   const [bmi, setBmi] = useState({ height: 180, weight: 75, result: 23.1 });
   const [showCalorieModal, setShowCalorieModal] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  const handleAvatarClick = async () => {
+    const result = await ActionSheet.showActions({
+      title: 'Profile Picture',
+      message: 'Choose a source',
+      options: [
+        {
+          title: 'Take Photo',
+        },
+        {
+          title: 'Choose from Gallery',
+        },
+        {
+          title: 'Cancel',
+          style: ActionSheetButtonStyle.Cancel,
+        },
+      ],
+    });
+
+    if (result.index === 0) {
+      takePhoto(CameraSource.Camera);
+    } else if (result.index === 1) {
+      takePhoto(CameraSource.Photos);
+    }
+  };
+
+  const takePhoto = async (source: CameraSource) => {
+    try {
+      const image = await CapCamera.getPhoto({
+        quality: 90,
+        allowEditing: true,
+        resultType: CameraResultType.Uri,
+        source: source,
+      });
+      setAvatarUrl(image.webPath || null);
+    } catch (error) {
+      console.error('Camera error:', error);
+    }
+  };
 
   const calculateBMI = (h: number, w: number) => {
     const heightInMeters = h / 100;
@@ -52,10 +94,17 @@ const Profile: React.FC = () => {
             <div className="relative w-32 h-32 mx-auto">
               <div className="w-full h-full rounded-3xl bg-gradient-to-tr from-indigo-500 to-cyan-400 p-1">
                 <div className="w-full h-full rounded-[20px] bg-slate-900 flex items-center justify-center overflow-hidden">
-                  <User size={64} className="text-slate-700" />
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <User size={64} className="text-slate-700" />
+                  )}
                 </div>
               </div>
-              <button className="absolute -bottom-2 -right-2 p-2 bg-indigo-600 rounded-xl text-white border-2 border-slate-900 hover:bg-indigo-500 transition-colors">
+              <button 
+                onClick={handleAvatarClick}
+                className="absolute -bottom-2 -right-2 p-2 bg-indigo-600 rounded-xl text-white border-2 border-slate-900 hover:bg-indigo-500 transition-colors active:scale-90"
+              >
                 <Camera size={18} />
               </button>
             </div>

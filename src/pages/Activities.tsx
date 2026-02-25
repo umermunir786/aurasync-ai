@@ -2,19 +2,17 @@ import React, { useState } from 'react';
 import { 
   Plus, 
   Trash2, 
-  Calendar, 
   Filter,
-  MoreVertical,
   Activity as ActivityIcon,
   Search
 } from 'lucide-react';
-import { useActivities, Activity } from '../hooks/useActivities';
+import { useActivities, type Activity } from '../hooks/useActivities';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 
 const Activities: React.FC = () => {
-  const { activities, isLoading, addActivity, deleteActivity } = useActivities();
+  const { activities, addActivity, deleteActivity } = useActivities();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newActivity, setNewActivity] = useState({
     type: 'Steps',
