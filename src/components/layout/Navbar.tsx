@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sun, Moon, Bell, Search, ChevronDown, Menu, X } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-
+import { useNotificationStore } from '../../store/useNotificationStore';
 interface NavbarProps {
   onToggleSidebar: () => void;
   isSidebarOpen: boolean;
@@ -9,6 +10,8 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const unreadCount = useNotificationStore((state) => state.unreadCount);
   const [isDarkMode, setIsDarkMode] = useState(true);
 
   useEffect(() => {
@@ -22,7 +25,7 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen }) => {
   }, [isDarkMode]);
 
   return (
-    <header className="h-20 glass border-b border-white/10 flex items-center justify-between px-8 sticky top-0 z-40">
+    <header className="min-h-20 pt-safe glass border-b border-white/10 flex items-center justify-between px-8 sticky top-0 z-40">
       <div className="flex items-center space-x-4">
         <button 
           onClick={onToggleSidebar}
@@ -50,9 +53,16 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen }) => {
           {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
         </button>
 
-        <button className="p-2.5 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white transition-all border border-white/5 relative">
+        <button 
+          onClick={() => navigate('/notifications')}
+          className="p-2.5 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white transition-all border border-white/5 relative active:scale-95"
+        >
           <Bell size={20} />
-          <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-indigo-500 rounded-full border-2 border-slate-900"></span>
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 bg-indigo-500 text-white text-[10px] font-bold rounded-full border-2 border-slate-900 flex items-center justify-center animate-pulse shadow-[0_0_10px_rgba(99,102,241,0.5)]">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
         </button>
 
         <div className="h-8 w-px bg-white/10 mx-2"></div>

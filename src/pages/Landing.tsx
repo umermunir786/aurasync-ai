@@ -17,15 +17,15 @@ import Card from '../components/ui/Card';
 
 const Landing: React.FC = () => {
   return (
-    <div className="min-h-screen bg-[#0f172a] text-white selection:bg-indigo-500/30 overflow-x-hidden">
+    <div className="min-h-screen bg-background text-white selection:bg-indigo-500/30 overflow-x-hidden">
       {/* Decorative blobs */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/10 blur-[120px] rounded-full"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-600/10 blur-[120px] rounded-full"></div>
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/20 blur-[120px] rounded-full"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-600/20 blur-[120px] rounded-full"></div>
       </div>
 
       {/* Nav */}
-      <nav className="relative z-10 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto">
+      <nav className="relative z-10 flex items-center justify-between px-8 py-6 pt-safe max-w-7xl mx-auto">
         <div className="flex items-center space-x-2">
           <div className="w-10 h-10 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
             <Activity className="text-white" size={24} />

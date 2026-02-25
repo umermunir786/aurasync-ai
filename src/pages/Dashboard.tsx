@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-  LineChart, Line, AreaChart, Area, BarChart, Bar, 
+  AreaChart, Area, BarChart, Bar, 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   RadialBarChart, RadialBar, Legend
 } from 'recharts';
@@ -140,18 +140,18 @@ const Dashboard: React.FC = () => {
               <AreaChart data={weightData}>
                 <defs>
                   <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#818cf8" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                 <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} domain={['dataMin - 1', 'dataMax + 1']} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '12px' }}
+                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '16px', backdropFilter: 'blur(10px)' }}
                   itemStyle={{ color: '#fff' }}
                 />
-                <Area type="monotone" dataKey="weight" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorWeight)" />
+                <Area type="monotone" dataKey="weight" stroke="#818cf8" strokeWidth={4} fillOpacity={1} fill="url(#colorWeight)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -165,13 +165,13 @@ const Dashboard: React.FC = () => {
               <RadialBarChart cx="50%" cy="50%" innerRadius="30%" outerRadius="100%" barSize={15} data={goalPcnt}>
                 <RadialBar
                   label={{ position: 'insideStart', fill: '#fff' }}
-                  background={{ fill: '#1e293b' }}
+                  background={{ fill: 'rgba(255,255,255,0.05)' }}
                   dataKey="value"
                   cornerRadius={10}
                 />
                 <Legend iconSize={10} layout="vertical" verticalAlign="bottom" wrapperStyle={{ paddingBottom: '20px' }} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '12px' }}
+                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '16px' }}
                 />
               </RadialBarChart>
             </ResponsiveContainer>
@@ -184,14 +184,14 @@ const Dashboard: React.FC = () => {
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={activityData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                 <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  cursor={{ fill: '#334155', opacity: 0.1 }}
-                  contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '12px' }}
+                  cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '16px' }}
                 />
-                <Bar dataKey="calories" fill="#06b6d4" radius={[6, 6, 0, 0]} barSize={40} />
+                <Bar dataKey="calories" fill="#22d3ee" radius={[8, 8, 0, 0]} barSize={40} />
               </BarChart>
             </ResponsiveContainer>
           </div>

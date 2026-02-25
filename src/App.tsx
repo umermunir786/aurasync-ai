@@ -14,14 +14,24 @@ const AIChat = lazy(() => import('./pages/AIChat'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Settings = lazy(() => import('./pages/Settings'));
+const Notifications = lazy(() => import('./pages/Notifications'));
 
+import { Capacitor } from '@capacitor/core';
 import { SocialAuthService } from './services/SocialAuthService';
 import { SubscriptionService } from './services/SubscriptionService';
+
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { SplashScreen } from '@capacitor/splash-screen';
 
 const App: React.FC = () => {
   React.useEffect(() => {
     const initServices = async () => {
       try {
+        if (Capacitor.isNativePlatform()) {
+          await StatusBar.setStyle({ style: Style.Dark });
+          await StatusBar.setBackgroundColor({ color: '#020617' });
+          await SplashScreen.hide();
+        }
         await SocialAuthService.init();
         await SubscriptionService.init();
       } catch (error) {
@@ -48,6 +58,7 @@ const App: React.FC = () => {
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/notifications" element={<Notifications />} />
             </Route>
           </Route>
 

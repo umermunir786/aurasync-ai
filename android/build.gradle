@@ -33,6 +33,14 @@ allprojects {
                 }
             }
         }
+        // Force Kotlin JVM target 17
+        project.tasks.configureEach {
+            if (it.class.name.contains("KotlinCompile")) {
+                it.kotlinOptions {
+                    jvmTarget = "17"
+                }
+            }
+        }
     }
 }
 
