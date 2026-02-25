@@ -13,8 +13,24 @@ const Goals = lazy(() => import('./pages/Goals'));
 const AIChat = lazy(() => import('./pages/AIChat'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 const Profile = lazy(() => import('./pages/Profile'));
+const Settings = lazy(() => import('./pages/Settings'));
+
+import { SocialAuthService } from './services/SocialAuthService';
+import { SubscriptionService } from './services/SubscriptionService';
 
 const App: React.FC = () => {
+  React.useEffect(() => {
+    const initServices = async () => {
+      try {
+        await SocialAuthService.init();
+        await SubscriptionService.init();
+      } catch (error) {
+        console.error('Failed to initialize services:', error);
+      }
+    };
+    initServices();
+  }, []);
+
   return (
     <BrowserRouter>
       <Suspense fallback={<div className="flex items-center justify-center h-screen bg-slate-900 text-white">Loading...</div>}>
@@ -31,6 +47,7 @@ const App: React.FC = () => {
               <Route path="/ai-chat" element={<AIChat />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/settings" element={<Settings />} />
             </Route>
           </Route>
 
