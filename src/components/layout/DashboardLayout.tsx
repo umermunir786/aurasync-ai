@@ -8,7 +8,7 @@ const DashboardLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-white overflow-hidden">
+    <div className="flex min-h-screen pb-safe bg-slate-950 text-white overflow-hidden">
       <NotificationManager />
       <Sidebar isOpen={isSidebarOpen} />
       <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
