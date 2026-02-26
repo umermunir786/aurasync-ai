@@ -17,6 +17,9 @@ const Profile = lazy(() => import('./pages/Profile'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const VisionNutrition = lazy(() => import('./pages/VisionNutrition'));
+const Onboarding = lazy(() => import('./pages/Onboarding'));
+import { useAuth } from './hooks/useAuth';
+import { AuthService } from './services/AuthService';
 
 import { Capacitor } from '@capacitor/core';
 import { SocialAuthService } from './services/SocialAuthService';
@@ -26,6 +29,8 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import { SplashScreen } from '@capacitor/splash-screen';
 
 const App: React.FC = () => {
+  const { isAuthenticated, setUser } = useAuth();
+
   React.useEffect(() => {
     const initServices = async () => {
       try {
@@ -36,12 +41,18 @@ const App: React.FC = () => {
         }
         await SocialAuthService.init();
         await SubscriptionService.init();
+        
+        // Sync profile if authenticated
+        if (isAuthenticated) {
+          const user = await AuthService.getProfile();
+          setUser(user);
+        }
       } catch (error) {
         console.error('Failed to initialize services:', error);
       }
     };
     initServices();
-  }, []);
+  }, [isAuthenticated, setUser]);
 
   return (
     <BrowserRouter>
@@ -63,6 +74,7 @@ const App: React.FC = () => {
               <Route path="/settings" element={<Settings />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/vision-nutrition" element={<VisionNutrition />} />
+              <Route path="/onboarding" element={<Onboarding />} />
             </Route>
           </Route>
 

@@ -7,7 +7,11 @@ class UserBase(BaseModel):
     is_active: Optional[bool] = True
     is_superuser: bool = False
     full_name: Optional[str] = None
-
+    onboarded: bool = False
+    weight: Optional[int] = None
+    height: Optional[int] = None
+    age: Optional[int] = None
+    gender: Optional[str] = None
 
 class UserCreate(UserBase): # Create User (For signup)
     email: EmailStr
@@ -19,12 +23,10 @@ class UserUpdate(UserBase): # Update User (For API requests)
 class TokenPayload(BaseModel):
     sub: Optional[int] = None
 
-
 class User(UserBase): # Return User (For API responses - no password!)
     id: int
     is_verified: bool
     
-
     model_config = ConfigDict(from_attributes=True)
 
 

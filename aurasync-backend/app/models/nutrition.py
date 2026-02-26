@@ -7,6 +7,7 @@ class NutritionLog(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     item_name = Column(String, index=True)
+    image_url = Column(String, nullable=True)
     calories = Column(Float)
     protein = Column(Float)
     carbs = Column(Float)

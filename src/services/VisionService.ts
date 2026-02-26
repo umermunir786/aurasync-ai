@@ -11,7 +11,7 @@ export interface FoodAnalysis {
 }
 
 export const VisionService = {
-  async captureAndAnalyze(): Promise<FoodAnalysis[]> {
+  async captureAndAnalyze(): Promise<{ analysis: FoodAnalysis[], imageUrl: string }> {
     try {
       const image = await Camera.getPhoto({
         quality: 90,
@@ -30,7 +30,10 @@ export const VisionService = {
         image_base64: image.base64String,
       });
       
-      return response.data;
+      return {
+        analysis: response.data,
+        imageUrl: `data:image/jpeg;base64,${image.base64String}`
+      };
     } catch (error) {
       console.error('Vision analysis error:', error);
       throw error;

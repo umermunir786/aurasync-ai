@@ -51,5 +51,10 @@ export const ActivityService = {
   async getRecommendations(): Promise<string[]> {
     const response = await api.get<{ recommendations: string[] }>('/ai/recommendations');
     return response.data.recommendations;
+  },
+  
+  async resetData(): Promise<{ msg: string }> {
+    const response = await api.delete<{ msg: string }>('/ai/reset-data');
+    return response.data;
   }
 };

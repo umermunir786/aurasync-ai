@@ -7,6 +7,7 @@ class ActivityLog(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     activity_type = Column(String, index=True) # e.g., Running, Cycling, Walking
+    image_url = Column(String, nullable=True)
     duration_minutes = Column(Integer)
     intensity = Column(String) # e.g., Low, Medium, High
     calories_burned = Column(Float)

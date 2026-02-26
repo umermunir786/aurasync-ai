@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import Card from '../components/ui/Card';
-import { Shield, HelpCircle, Mail, Bell, ChevronRight, ExternalLink, Zap } from 'lucide-react';
+import { Shield, HelpCircle, Mail, Bell, ChevronRight, ExternalLink, Zap, Trash2, RefreshCcw } from 'lucide-react';
 import { SubscriptionService } from '../services/SubscriptionService';
 import { NotificationService } from '../services/NotificationService';
+import { ActivityService } from '../services/ActivityService';
 
 interface SettingItem {
   icon: React.ReactNode;
@@ -12,6 +13,7 @@ interface SettingItem {
   toggle?: boolean;
   value?: boolean;
   onToggle?: () => void;
+  variant?: 'default' | 'danger';
 }
 
 interface SettingSection {
@@ -22,6 +24,23 @@ interface SettingSection {
 const Settings: React.FC = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+
+  const handleResetData = async () => {
+    if (!window.confirm('Are you sure you want to start from scratch? This will permanently delete all your activity logs, nutrition history, and goals.')) {
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      await ActivityService.resetData();
+      alert('Your health data has been reset to zero.');
+    } catch (err) {
+      alert('Failed to reset data. Please try again.');
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   const toggleNotifications = async () => {
     const newValue = !notificationsEnabled;
@@ -92,6 +111,18 @@ const Settings: React.FC = () => {
       items: [
         { icon: <Shield size={20} />, label: 'Privacy Policy', description: 'How we handle your data', action: () => alert('Opening Privacy Policy...') },
         { icon: <ExternalLink size={20} />, label: 'Terms of Service', description: 'Application terms and conditions', action: () => alert('Opening Terms of Service...') },
+      ]
+    },
+    {
+      title: 'Danger Zone',
+      items: [
+        { 
+          icon: isResetting ? <RefreshCcw size={20} className="animate-spin" /> : <Trash2 size={20} />, 
+          label: 'Start from Scratch', 
+          description: 'Permanently delete all logs and goals', 
+          action: isResetting ? undefined : handleResetData,
+          variant: 'danger'
+        },
       ]
     }
   ];
