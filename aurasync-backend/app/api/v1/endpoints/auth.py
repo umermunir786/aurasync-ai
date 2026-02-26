@@ -53,6 +53,8 @@ def create_user(
             detail="The user with this username already exists in the system.",
         )
     user = crud.crud_user.create(db, obj_in=user_in)
+    # Initialize default health goals for the new user
+    crud.crud_activity_goal.create_default_goals(db, user_id=user.id)
     return user
 
 @router.post("/forgot-password", response_model=schemas.msg.Msg)

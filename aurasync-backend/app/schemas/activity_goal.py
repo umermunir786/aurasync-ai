@@ -8,6 +8,7 @@ class ActivityLogBase(BaseModel):
     duration_minutes: int
     intensity: str
     calories_burned: float
+    image_url: Optional[str] = None
 
 class ActivityLogCreate(ActivityLogBase):
     pass

@@ -12,3 +12,8 @@ class User(Base):
     is_verified = Column(Boolean(), default=False)
     otp = Column(String, nullable=True)
     otp_expires_at = Column(DateTime, nullable=True)
+    onboarded = Column(Boolean(), default=False)
+    weight = Column(Integer, nullable=True) # in kg
+    height = Column(Integer, nullable=True) # in cm
+    age = Column(Integer, nullable=True)
+    gender = Column(String, nullable=True)

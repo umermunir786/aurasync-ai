@@ -7,6 +7,7 @@ export interface Activity {
   duration_minutes: number;
   intensity: string;
   calories_burned: number;
+  image_url?: string;
   created_at: string;
 }
 
@@ -22,7 +23,7 @@ export const useActivities = () => {
   });
 
   const addActivity = useMutation({
-    mutationFn: async (newActivity: { activity_type: string, duration_minutes: number, intensity: string, calories_burned: number }) => {
+    mutationFn: async (newActivity: { activity_type: string, duration_minutes: number, intensity: string, calories_burned: number, image_url?: string }) => {
       const response = await api.post<Activity>('/ai/log-activity', newActivity);
       return response.data;
     },
@@ -32,7 +33,7 @@ export const useActivities = () => {
   });
 
   const deleteActivity = useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async (_id: number) => {
       // Backend delete not implemented yet, but keeping the mutation for future
       console.warn('Delete activity not implemented on backend');
     },

@@ -260,3 +260,37 @@ def chat_with_coach(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to chat: {str(e)}",
         )
+
+@router.delete("/reset-data")
+def reset_user_data(
+    db: Session = Depends(deps.get_db),
+    current_user: Any = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Clear all health-related data for the user (nutrition, activities, goals)
+    """
+    try:
+        # Delete nutrition logs
+        db.query(models.nutrition.NutritionLog).filter(
+            models.nutrition.NutritionLog.user_id == current_user.id
+        ).delete()
+        
+        # Delete activity logs
+        db.query(models.activity_goal.ActivityLog).filter(
+            models.activity_goal.ActivityLog.user_id == current_user.id
+        ).delete()
+        
+        # Delete user goals
+        db.query(models.activity_goal.UserGoal).filter(
+            models.activity_goal.UserGoal.user_id == current_user.id
+        ).delete()
+        
+        db.commit()
+        return {"msg": "All health data has been reset successfully"}
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Data reset error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to reset data: {str(e)}",
+        )

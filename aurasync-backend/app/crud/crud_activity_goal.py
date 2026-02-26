@@ -36,3 +36,18 @@ def create_user_goal(db: Session, *, obj_in: UserGoalCreate, user_id: int) -> Us
 
 def get_goals_by_user(db: Session, *, user_id: int) -> List[UserGoal]:
     return db.query(UserGoal).filter(UserGoal.user_id == user_id).all()
+
+def create_default_goals(db: Session, *, user_id: int) -> None:
+    """Initialize default goals for a new user"""
+    defaults = [
+        {"goal_type": "Calories", "target_value": 2000, "unit": "kcal", "period": "daily"},
+        {"goal_type": "Steps", "target_value": 10000, "unit": "steps", "period": "daily"},
+        {"goal_type": "Water", "target_value": 2, "unit": "liters", "period": "daily"},
+    ]
+    for goal in defaults:
+        db_obj = UserGoal(
+            user_id=user_id,
+            **goal
+        )
+        db.add(db_obj)
+    db.commit()

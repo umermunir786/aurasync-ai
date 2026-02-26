@@ -16,12 +16,14 @@ interface NutritionLog {
   carbs: number;
   fat: number;
   confidence: number;
+  image_url?: string;
   created_at: string;
 }
 
 const VisionNutrition: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [results, setResults] = useState<FoodAnalysis[] | null>(null);
+  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
   const [isLogged, setIsLogged] = useState(false);
   const [recentScans, setRecentScans] = useState<NutritionLog[]>([]);
   const [isLoadingScans, setIsLoadingScans] = useState(false);
@@ -45,10 +47,12 @@ const VisionNutrition: React.FC = () => {
   const handleCapture = async () => {
     setIsAnalyzing(true);
     setResults(null);
+    setCurrentImageUrl(null);
     setIsLogged(false);
     try {
-      const analysis = await VisionService.captureAndAnalyze();
+      const { analysis, imageUrl } = await VisionService.captureAndAnalyze();
       setResults(analysis);
+      setCurrentImageUrl(imageUrl);
     } catch (err) {
       console.error(err);
     } finally {
@@ -61,8 +65,6 @@ const VisionNutrition: React.FC = () => {
     
     setIsLogged(true);
     try {
-      // Log each item in the results
-      // In a more complex app, we might want a bulk log endpoint
       for (const item of results) {
         await api.post('/ai/log-nutrition', {
           item_name: item.item,
@@ -70,7 +72,8 @@ const VisionNutrition: React.FC = () => {
           protein: item.protein,
           carbs: item.carbs,
           fat: item.fat,
-          confidence: item.confidence
+          confidence: item.confidence,
+          image_url: currentImageUrl // Pass the image captured
         });
       }
       await fetchRecentScans();
@@ -207,9 +210,14 @@ const VisionNutrition: React.FC = () => {
                   ) : recentScans.length > 0 ? (
                     recentScans.map((scan) => (
                       <div key={scan.id} className="flex justify-between items-center text-slate-400 mb-1 border-b border-white/5 pb-2 last:border-0 last:pb-0">
-                        <div className="flex flex-col">
-                          <span className="text-white font-medium">{scan.item_name}</span>
-                          <span className="text-[10px]">{format(new Date(scan.created_at), 'MMM d, hh:mm a')}</span>
+                        <div className="flex items-center gap-3">
+                          {scan.image_url && (
+                            <img src={scan.image_url} alt={scan.item_name} className="w-8 h-8 rounded-md object-cover border border-white/10" />
+                          )}
+                          <div className="flex flex-col">
+                            <span className="text-white font-medium">{scan.item_name}</span>
+                            <span className="text-[10px]">{format(new Date(scan.created_at), 'MMM d, hh:mm a')}</span>
+                          </div>
                         </div>
                         <div className="text-right">
                           <span className="font-bold text-white">{scan.calories} kcal</span>

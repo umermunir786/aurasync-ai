@@ -5,6 +5,11 @@ export interface User {
   email: string;
   full_name: string;
   is_verified: boolean;
+  onboarded: boolean;
+  weight?: number;
+  height?: number;
+  age?: number;
+  gender?: string;
 }
 
 export interface LoginResponse {

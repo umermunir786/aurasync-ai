@@ -9,6 +9,7 @@ class NutritionLogBase(BaseModel):
     carbs: float
     fat: float
     confidence: float
+    image_url: Optional[str] = None
 
 class NutritionLogCreate(NutritionLogBase):
     pass

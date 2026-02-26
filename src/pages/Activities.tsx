@@ -105,8 +105,12 @@ const Activities: React.FC = () => {
                     <tr key={activity.id} className="hover:bg-white/[0.02] transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400">
-                            <ActivityIcon size={16} />
+                          <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400 overflow-hidden shrink-0 w-10 h-10 flex items-center justify-center">
+                            {activity.image_url ? (
+                              <img src={activity.image_url} alt={activity.activity_type} className="w-full h-full object-cover" />
+                            ) : (
+                              <ActivityIcon size={16} />
+                            )}
                           </div>
                           <span className="font-medium text-white">{activity.activity_type}</span>
                         </div>
