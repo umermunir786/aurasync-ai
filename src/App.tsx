@@ -15,6 +15,7 @@ const Analytics = lazy(() => import('./pages/Analytics'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Notifications = lazy(() => import('./pages/Notifications'));
+const VisionNutrition = lazy(() => import('./pages/VisionNutrition'));
 
 import { Capacitor } from '@capacitor/core';
 import { SocialAuthService } from './services/SocialAuthService';
@@ -59,6 +60,7 @@ const App: React.FC = () => {
               <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/notifications" element={<Notifications />} />
+              <Route path="/vision-nutrition" element={<VisionNutrition />} />
             </Route>
           </Route>
 
