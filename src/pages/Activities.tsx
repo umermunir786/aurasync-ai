@@ -15,23 +15,22 @@ const Activities: React.FC = () => {
   const { activities, addActivity, deleteActivity } = useActivities();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newActivity, setNewActivity] = useState({
-    type: 'Steps',
-    value: 0,
-    unit: 'steps',
-    notes: ''
+    activity_type: 'Running',
+    duration_minutes: 30,
+    intensity: 'Medium',
+    calories_burned: 300
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    addActivity.mutate(newActivity as any);
+    addActivity.mutate(newActivity);
     setIsAddModalOpen(false);
   };
 
   // Mock data if backend is not available for preview
   const mockActivities: Activity[] = [
-    { id: '1', type: 'Steps', value: 8432, unit: 'steps', timestamp: new Date().toISOString(), notes: 'Morning walk' },
-    { id: '2', type: 'Calories', value: 450, unit: 'kcal', timestamp: new Date().toISOString(), notes: 'Gym session' },
-    { id: '3', type: 'Water', value: 500, unit: 'ml', timestamp: new Date().toISOString(), notes: 'After lunch' },
+    { id: 1, activity_type: 'Running', duration_minutes: 30, intensity: 'High', calories_burned: 450, created_at: new Date().toISOString() },
+    { id: 2, activity_type: 'Walking', duration_minutes: 60, intensity: 'Low', calories_burned: 200, created_at: new Date().toISOString() },
   ];
 
   const displayActivities = activities || mockActivities;
@@ -94,9 +93,10 @@ const Activities: React.FC = () => {
                 <thead>
                   <tr className="border-b border-white/5 bg-white/5">
                     <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Activity</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Value</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Time</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Notes</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Duration</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Intensity</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Calories</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Date</th>
                     <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider text-right">Actions</th>
                   </tr>
                 </thead>
@@ -108,23 +108,32 @@ const Activities: React.FC = () => {
                           <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400">
                             <ActivityIcon size={16} />
                           </div>
-                          <span className="font-medium text-white">{activity.type}</span>
+                          <span className="font-medium text-white">{activity.activity_type}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-slate-300 font-semibold">{activity.value}</span>
-                        <span className="ml-1 text-slate-500 text-sm">{activity.unit}</span>
+                        <span className="text-slate-300 font-semibold">{activity.duration_minutes}</span>
+                        <span className="ml-1 text-slate-500 text-sm">min</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${
+                          activity.intensity === 'High' ? 'bg-red-500/10 text-red-400' :
+                          activity.intensity === 'Medium' ? 'bg-yellow-500/10 text-yellow-400' :
+                          'bg-green-500/10 text-green-400'
+                        }`}>
+                          {activity.intensity}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-300">
+                        {activity.calories_burned} kcal
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-400">
-                        {new Date(activity.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-slate-500 truncate max-w-[200px]">
-                        {activity.notes || '-'}
+                        {new Date(activity.created_at).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <button 
                           onClick={() => deleteActivity.mutate(activity.id)}
-                          className="p-2 text-slate-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                          className="p-2 text-slate-500 hover:text-red-400 transition-colors opacity-100"
                         >
                           <Trash2 size={18} />
                         </button>
@@ -149,27 +158,34 @@ const Activities: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input 
                 label="Activity Type" 
-                value={newActivity.type} 
-                onChange={(e) => setNewActivity({...newActivity, type: e.target.value})}
+                value={newActivity.activity_type} 
+                onChange={(e) => setNewActivity({...newActivity, activity_type: e.target.value})}
               />
               <div className="grid grid-cols-2 gap-4">
                 <Input 
-                  label="Value" 
+                  label="Duration (min)" 
                   type="number" 
-                  value={newActivity.value}
-                  onChange={(e) => setNewActivity({...newActivity, value: Number(e.target.value)})}
+                  value={newActivity.duration_minutes}
+                  onChange={(e) => setNewActivity({...newActivity, duration_minutes: Number(e.target.value)})}
                 />
-                <Input 
-                  label="Unit" 
-                  value={newActivity.unit}
-                  onChange={(e) => setNewActivity({...newActivity, unit: e.target.value})}
-                />
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-500 uppercase">Intensity</label>
+                  <select 
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 h-11 text-slate-200 focus:outline-none focus:border-indigo-500/50"
+                    value={newActivity.intensity}
+                    onChange={(e) => setNewActivity({...newActivity, intensity: e.target.value})}
+                  >
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                  </select>
+                </div>
               </div>
               <Input 
-                label="Notes" 
-                placeholder="Optional notes..."
-                value={newActivity.notes}
-                onChange={(e) => setNewActivity({...newActivity, notes: e.target.value})}
+                label="Calories Burned" 
+                type="number"
+                value={newActivity.calories_burned}
+                onChange={(e) => setNewActivity({...newActivity, calories_burned: Number(e.target.value)})}
               />
               <div className="flex space-x-3 pt-2">
                 <Button variant="secondary" className="flex-1" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>

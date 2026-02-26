@@ -2,13 +2,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/axios';
 
 export interface Goal {
-  id: string;
-  type: string;
-  targetValue: number;
-  currentValue: number;
-  deadline: string;
+  id: number;
+  goal_type: string;
+  target_value: number;
   unit: string;
-  aiPlan?: string;
+  period: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export const useGoals = () => {
@@ -17,14 +17,14 @@ export const useGoals = () => {
   const { data: goals, isLoading, error } = useQuery({
     queryKey: ['goals'],
     queryFn: async () => {
-      const response = await api.get<Goal[]>('/goals');
+      const response = await api.get<Goal[]>('/ai/goals');
       return response.data;
     },
   });
 
   const addGoal = useMutation({
-    mutationFn: async (newGoal: Omit<Goal, 'id' | 'currentValue' | 'aiPlan'>) => {
-      const response = await api.post<Goal>('/goals', newGoal);
+    mutationFn: async (newGoal: { goal_type: string, target_value: number, unit: string, period: string }) => {
+      const response = await api.post<Goal>('/ai/upsert-goal', newGoal);
       return response.data;
     },
     onSuccess: () => {

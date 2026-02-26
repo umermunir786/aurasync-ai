@@ -15,28 +15,31 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 
 const Goals: React.FC = () => {
-  const { goals } = useGoals();
+  const { goals, addGoal } = useGoals();
   const [isAddMode, setIsAddMode] = useState(false);
+  const [newGoal, setNewGoal] = useState({
+    goal_type: 'Weight Loss',
+    target_value: 75,
+    unit: 'kg',
+    period: 'daily'
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    addGoal.mutate(newGoal);
+    setIsAddMode(false);
+  };
 
   // Mock data for display
   const mockGoals: Goal[] = [
     { 
-      id: '1', 
-      type: 'Weight Loss', 
-      targetValue: 75, 
-      currentValue: 79.8, 
-      deadline: '2026-06-01', 
+      id: 1, 
+      goal_type: 'Weight Loss', 
+      target_value: 75, 
       unit: 'kg',
-      aiPlan: 'Focus on high-intensity interval training (HIIT) 3 times a week and maintain a 500-calorie deficit. Prioritize protein intake to preserve muscle mass.'
-    },
-    { 
-      id: '2', 
-      type: 'Daily Steps', 
-      targetValue: 10000, 
-      currentValue: 8432, 
-      deadline: 'Today', 
-      unit: 'steps',
-      aiPlan: 'You are close! Take a 15-minute walk after dinner to reach your daily goal easily.'
+      period: 'daily',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
   ];
 
@@ -60,9 +63,7 @@ const Goals: React.FC = () => {
         {/* Goals List */}
         <div className="xl:col-span-2 space-y-6">
           {displayGoals.map((goal) => {
-            const progress = goal.type === 'Weight Loss' 
-              ? Math.max(0, Math.min(100, (85 - goal.currentValue) / (85 - goal.targetValue) * 100))
-              : (goal.currentValue / goal.targetValue) * 100;
+            const progress = 50; // Simplified progress for now
 
             return (
               <Card key={goal.id} className="group hover:border-indigo-500/30 transition-all duration-500">
@@ -72,10 +73,10 @@ const Goals: React.FC = () => {
                       <Target size={28} />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-white">{goal.type}</h3>
+                      <h3 className="text-xl font-bold text-white">{goal.goal_type}</h3>
                       <div className="flex items-center space-x-3 mt-1 text-sm text-slate-400">
-                        <span className="flex items-center"><Calendar size={14} className="mr-1" /> Target: {goal.deadline}</span>
-                        <span className="flex items-center"><Trophy size={14} className="mr-1 text-yellow-500/70" /> {goal.targetValue} {goal.unit}</span>
+                        <span className="flex items-center"><Calendar size={14} className="mr-1" /> Period: {goal.period}</span>
+                        <span className="flex items-center"><Trophy size={14} className="mr-1 text-yellow-500/70" /> {goal.target_value} {goal.unit}</span>
                       </div>
                     </div>
                   </div>
@@ -97,22 +98,10 @@ const Goals: React.FC = () => {
                     ></div>
                   </div>
                   <div className="flex justify-between text-xs text-slate-500 px-1">
-                    <span>{goal.currentValue} {goal.unit}</span>
-                    <span>Goal: {goal.targetValue} {goal.unit}</span>
+                    <span>Progress tracked by AI</span>
+                    <span>Goal: {goal.target_value} {goal.unit}</span>
                   </div>
                 </div>
-
-                {goal.aiPlan && (
-                  <div className="mt-6 p-4 bg-slate-900/50 rounded-xl border border-white/5 flex items-start space-x-4">
-                    <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400">
-                      <BrainCircuit size={18} />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-purple-400 uppercase tracking-wider mb-1">AI Recommendation</p>
-                      <p className="text-sm text-slate-300 italic">"{goal.aiPlan}"</p>
-                    </div>
-                  </div>
-                )}
               </Card>
             );
           })}
@@ -123,18 +112,43 @@ const Goals: React.FC = () => {
           {isAddMode ? (
             <Card className="border-indigo-500/30 animate-in slide-in-from-right-4 duration-500">
               <h3 className="text-lg font-bold text-white mb-4">New Goal Setting</h3>
-              <div className="space-y-4">
-                <Input label="Goal Type" placeholder="e.g., Weight Loss, Muscle Gain" />
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <Input 
+                  label="Goal Type" 
+                  value={newGoal.goal_type}
+                  onChange={(e) => setNewGoal({...newGoal, goal_type: e.target.value})}
+                />
                 <div className="grid grid-cols-2 gap-4">
-                  <Input label="Target Value" type="number" />
-                  <Input label="Unit" placeholder="kg, km, etc." />
+                  <Input 
+                    label="Target Value" 
+                    type="number" 
+                    value={newGoal.target_value}
+                    onChange={(e) => setNewGoal({...newGoal, target_value: Number(e.target.value)})}
+                  />
+                  <Input 
+                    label="Unit" 
+                    placeholder="kg, kcal, etc." 
+                    value={newGoal.unit}
+                    onChange={(e) => setNewGoal({...newGoal, unit: e.target.value})}
+                  />
                 </div>
-                <Input label="Deadline" type="date" />
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-500 uppercase">Period</label>
+                  <select 
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 h-11 text-slate-200 focus:outline-none focus:border-indigo-500/50"
+                    value={newGoal.period}
+                    onChange={(e) => setNewGoal({...newGoal, period: e.target.value})}
+                  >
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
                 <div className="pt-2 flex flex-col space-y-3">
-                  <Button className="w-full">Create Goal & Generate Plan</Button>
+                  <Button type="submit" className="w-full">Create Goal</Button>
                   <Button variant="ghost" className="w-full" onClick={() => setIsAddMode(false)}>Cancel</Button>
                 </div>
-              </div>
+              </form>
             </Card>
           ) : (
             <Card className="bg-gradient-to-br from-indigo-600/20 to-purple-600/20 border-indigo-500/30">

@@ -25,11 +25,11 @@ export const useAuthStore = create<AuthState>()(
       login: async (email, password) => {
         set({ isLoading: true, error: null });
         try {
-          const formData = new FormData();
-          formData.append('username', email); // OAuth2PasswordRequestForm expects 'username'
-          formData.append('password', password);
+          const params = new URLSearchParams();
+          params.append('username', email); // OAuth2PasswordRequestForm expects 'username'
+          params.append('password', password);
           
-          const { access_token } = await AuthService.login(formData);
+          const { access_token } = await AuthService.login(params);
           localStorage.setItem('token', access_token);
           
           // Get user profile after login
