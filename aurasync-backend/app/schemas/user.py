@@ -16,6 +16,9 @@ class UserCreate(UserBase): # Create User (For signup)
 class UserUpdate(UserBase): # Update User (For API requests)
     password: Optional[str] = None
 
+class TokenPayload(BaseModel):
+    sub: Optional[int] = None
+
 
 class User(UserBase): # Return User (For API responses - no password!)
     id: int
@@ -23,3 +26,16 @@ class User(UserBase): # Return User (For API responses - no password!)
     
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class VerifyOTPRequest(BaseModel):
+    email: EmailStr
+    otp: str
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    otp: str
+    new_password: str

@@ -54,3 +54,56 @@ def create_user(
         )
     user = crud.crud_user.create(db, obj_in=user_in)
     return user
+
+@router.post("/forgot-password", response_model=schemas.msg.Msg)
+def forgot_password(
+    *,
+    db: Session = Depends(deps.get_db),
+    req: schemas.user.ForgotPasswordRequest,
+) -> Any:
+    """Send OTP to user email (stub)"""
+    user = crud.crud_user.get_by_email(db, email=req.email)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="The user with this username does not exist in the system.",
+        )
+    otp = crud.crud_user.update_otp(db, db_obj=user)
+    # Stub: print OTP to console instead of sending email
+    print(f"DEBUG: OTP for {req.email} is {otp}")
+    return {"msg": "Password recovery OTP sent"}
+
+@router.post("/verify-otp", response_model=schemas.msg.Msg)
+def verify_otp(
+    *,
+    db: Session = Depends(deps.get_db),
+    req: schemas.user.VerifyOTPRequest,
+) -> Any:
+    """Verify OTP for password reset"""
+    user = crud.crud_user.get_by_email(db, email=req.email)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    is_valid = crud.crud_user.verify_otp(db, db_obj=user, otp=req.otp)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+    
+    return {"msg": "OTP verified successfully"}
+
+@router.post("/reset-password", response_model=schemas.msg.Msg)
+def reset_password(
+    *,
+    db: Session = Depends(deps.get_db),
+    req: schemas.user.ResetPasswordRequest,
+) -> Any:
+    """Reset password using OTP"""
+    user = crud.crud_user.get_by_email(db, email=req.email)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    is_valid = crud.crud_user.verify_otp(db, db_obj=user, otp=req.otp)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+    
+    crud.crud_user.update_password(db, db_obj=user, password=req.new_password)
+    return {"msg": "Password updated successfully"}

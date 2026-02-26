@@ -21,10 +21,34 @@ import Input from '../components/ui/Input';
 import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { ActionSheet, ActionSheetButtonStyle } from '@capacitor/action-sheet';
 
+import { useAuth } from '../hooks/useAuth';
+import { AuthService } from '../services/AuthService';
+
 const Profile: React.FC = () => {
+  const { user } = useAuth();
   const [bmi, setBmi] = useState({ height: 180, weight: 75, result: 23.1 });
   const [showCalorieModal, setShowCalorieModal] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [updateMsg, setUpdateMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+  const [formData, setFormData] = useState({
+    full_name: user?.full_name || '',
+    email: user?.email || '',
+  });
+
+  const handleUpdateProfile = async () => {
+    setIsUpdating(true);
+    setUpdateMsg(null);
+    try {
+      await AuthService.updateProfile(formData);
+      setUpdateMsg({ type: 'success', text: 'Profile updated successfully!' });
+    } catch (err: any) {
+      setUpdateMsg({ type: 'error', text: err.response?.data?.detail || 'Failed to update profile' });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const handleAvatarClick = async () => {
     const result = await ActionSheet.showActions({
@@ -109,8 +133,8 @@ const Profile: React.FC = () => {
               </button>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">John Doe</h2>
-              <p className="text-slate-500 text-sm">Member since Jan 2026</p>
+              <h2 className="text-xl font-bold text-white">{user?.full_name || 'User'}</h2>
+              <p className="text-slate-500 text-sm">{user?.email}</p>
             </div>
             <div className="pt-4 border-t border-white/5 grid grid-cols-2 gap-4">
               <div>
@@ -147,9 +171,26 @@ const Profile: React.FC = () => {
         <div className="lg:col-span-2 space-y-6">
           <Card className="space-y-6">
             <h3 className="text-lg font-bold text-white">Personal Information</h3>
+            
+            {updateMsg && (
+              <div className={`p-3 rounded-xl border ${updateMsg.type === 'success' ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-red-500/10 border-red-500/20 text-red-400'} text-sm`}>
+                {updateMsg.text}
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Input label="Full Name" defaultValue="John Doe" icon={<User size={18} />} />
-              <Input label="Email Address" defaultValue="john@example.com" icon={<Mail size={18} />} />
+              <Input 
+                label="Full Name" 
+                value={formData.full_name} 
+                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                icon={<User size={18} />} 
+              />
+              <Input 
+                label="Email Address" 
+                value={formData.email} 
+                disabled
+                icon={<Mail size={18} />} 
+              />
               <Input label="Phone Number" defaultValue="+1 (555) 000-0000" icon={<Phone size={18} />} />
               <div className="flex flex-col space-y-2">
                 <label className="text-sm font-medium text-slate-300 ml-1">Gender</label>
@@ -161,7 +202,7 @@ const Profile: React.FC = () => {
               </div>
             </div>
             <div className="flex justify-end pt-4">
-              <Button>Save Changes</Button>
+              <Button onClick={handleUpdateProfile} isLoading={isUpdating}>Save Changes</Button>
             </div>
           </Card>
 

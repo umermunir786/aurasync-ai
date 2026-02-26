@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Camera as CameraIcon, Sparkles, Plus, History, Loader2, Check } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import { VisionService, FoodAnalysis } from '../services/VisionService';
+import { VisionService } from '../services/VisionService';
+import type { FoodAnalysis } from '../services/VisionService';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const VisionNutrition: React.FC = () => {

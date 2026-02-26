@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Mail, Lock, User, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import api from '../api/axios';
+import { AuthService } from '../services/AuthService';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
@@ -39,15 +39,15 @@ const Register: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      await api.post('/register', {
-        name: data.name,
+      await AuthService.signup({
+        full_name: data.name,
         email: data.email,
         password: data.password
       });
       setSuccess(true);
       setTimeout(() => navigate('/login'), 2000);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Something went wrong. Please try again.');
+      setError(err.response?.data?.detail || 'Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
     }

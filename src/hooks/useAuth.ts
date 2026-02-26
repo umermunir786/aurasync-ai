@@ -1,18 +1,17 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-}
+import { AuthService } from '../services/AuthService';
+import type { User } from '../services/AuthService';
 
 interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
-  login: (user: User, token: string) => void;
+  isLoading: boolean;
+  error: string | null;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  setError: (error: string | null) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -21,22 +20,42 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       isAuthenticated: false,
-      login: (user, token) => {
-        localStorage.setItem('token', token);
-        set({ user, token, isAuthenticated: true });
+      isLoading: false,
+      error: null,
+      login: async (email, password) => {
+        set({ isLoading: true, error: null });
+        try {
+          const formData = new FormData();
+          formData.append('username', email); // OAuth2PasswordRequestForm expects 'username'
+          formData.append('password', password);
+          
+          const { access_token } = await AuthService.login(formData);
+          localStorage.setItem('token', access_token);
+          
+          // Get user profile after login
+          const user = await AuthService.getProfile();
+          
+          set({ user, token: access_token, isAuthenticated: true, isLoading: false });
+        } catch (err: any) {
+          const message = err.response?.data?.detail || 'Login failed';
+          set({ error: message, isLoading: false });
+          throw err;
+        }
       },
       logout: () => {
         localStorage.removeItem('token');
-        set({ user: null, token: null, isAuthenticated: false });
+        set({ user: null, token: null, isAuthenticated: false, error: null });
       },
+      setError: (error) => set({ error }),
     }),
     {
       name: 'auth-storage',
+      partialize: (state) => ({ user: state.user, token: state.token, isAuthenticated: state.isAuthenticated }),
     }
   )
 );
 
 export const useAuth = () => {
-  const { user, token, isAuthenticated, login, logout } = useAuthStore();
-  return { user, token, isAuthenticated, login, logout };
+  const store = useAuthStore();
+  return store;
 };

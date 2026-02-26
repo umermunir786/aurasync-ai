@@ -5,7 +5,6 @@ import * as z from 'zod';
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import api from '../api/axios';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
@@ -22,10 +21,8 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isLoading, error, setError } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
   React.useEffect(() => {
     const setupNotifications = async () => {
@@ -41,10 +38,11 @@ const Login: React.FC = () => {
       }
     };
     setupNotifications();
+    // Clear error on mount
+    setError(null);
   }, []);
 
   const handleSocialLogin = async (provider: 'google' | 'apple') => {
-    setIsLoading(true);
     try {
       let result;
       if (provider === 'google') {
@@ -55,13 +53,11 @@ const Login: React.FC = () => {
       
       console.log(`${provider} login successful`, result);
       // Here you would typically send result.idToken or result.accessToken to your backend
-      // and then call login(user, token) from useAuth
+      // and then call login from useAuth
       
       navigate('/dashboard');
     } catch (err) {
       setError(`Failed to sign in with ${provider}`);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -74,32 +70,11 @@ const Login: React.FC = () => {
   });
 
   const onSubmit = async (data: LoginFormValues) => {
-    setIsLoading(true);
-    setError(null);
     try {
-       navigate('/dashboard', { replace: true });
-      // Simulate/Attempt login
-      const response = await api.post('/login', data);
-      const { user, access_token } = response.data;
-      
-      if (user && access_token) {
-        login(user, access_token);
-        navigate('/dashboard', { replace: true });
-      } else {
-        throw new Error('Invalid server response');
-      }
+      await login(data.email, data.password);
+      navigate('/dashboard', { replace: true });
     } catch (err: any) {
       console.error('Login error:', err);
-      // For development/demo purposes, if backend is not running, let's allow bypass
-      if (err.code === 'ERR_NETWORK' || err.response?.status === 404) {
-        console.warn('Backend reachability issue - bypassing for demo');
-        login({ id: '1', name: 'Demo User', email: data.email }, 'demo-token');
-        navigate('/dashboard', { replace: true });
-      } else {
-        setError(err.response?.data?.message || 'Invalid email or password');
-      }
-    } finally {
-      setIsLoading(false);
     }
   };
 

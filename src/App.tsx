@@ -7,6 +7,7 @@ import DashboardLayout from './components/layout/DashboardLayout';
 const Landing = lazy(() => import('./pages/Landing'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Activities = lazy(() => import('./pages/Activities'));
 const Goals = lazy(() => import('./pages/Goals'));
@@ -49,6 +50,7 @@ const App: React.FC = () => {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           
           <Route element={<PrivateRoute />}>
             <Route element={<DashboardLayout />}>
