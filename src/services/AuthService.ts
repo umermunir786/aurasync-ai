@@ -13,8 +13,8 @@ export interface LoginResponse {
 }
 
 export const AuthService = {
-  async login(formData: FormData): Promise<LoginResponse> {
-    const response = await api.post('/auth/login/access-token', formData, {
+  async login(credentials: URLSearchParams | FormData): Promise<LoginResponse> {
+    const response = await api.post('/auth/login/access-token', credentials, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },

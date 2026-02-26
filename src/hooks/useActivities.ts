@@ -2,12 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/axios';
 
 export interface Activity {
-  id: string;
-  type: string;
-  value: number;
-  unit: string;
-  timestamp: string;
-  notes?: string;
+  id: number;
+  activity_type: string;
+  duration_minutes: number;
+  intensity: string;
+  calories_burned: number;
+  created_at: string;
 }
 
 export const useActivities = () => {
@@ -16,14 +16,14 @@ export const useActivities = () => {
   const { data: activities, isLoading, error } = useQuery({
     queryKey: ['activities'],
     queryFn: async () => {
-      const response = await api.get<Activity[]>('/activities');
+      const response = await api.get<Activity[]>('/ai/recent-activities');
       return response.data;
     },
   });
 
   const addActivity = useMutation({
-    mutationFn: async (newActivity: Omit<Activity, 'id' | 'timestamp'>) => {
-      const response = await api.post<Activity>('/activities', newActivity);
+    mutationFn: async (newActivity: { activity_type: string, duration_minutes: number, intensity: string, calories_burned: number }) => {
+      const response = await api.post<Activity>('/ai/log-activity', newActivity);
       return response.data;
     },
     onSuccess: () => {
@@ -32,8 +32,9 @@ export const useActivities = () => {
   });
 
   const deleteActivity = useMutation({
-    mutationFn: async (id: string) => {
-      await api.delete(`/activities/${id}`);
+    mutationFn: async (id: number) => {
+      // Backend delete not implemented yet, but keeping the mutation for future
+      console.warn('Delete activity not implemented on backend');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['activities'] });

@@ -51,8 +51,32 @@ export const NotificationService = {
           },
         ],
       });
+    }
+  },
+
+  async scheduleDailyReminder(hour: number, minute: number) {
+    if (Capacitor.isNativePlatform()) {
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            title: 'Daily Health Reminder',
+            body: "Don't forget to log your meals and activities today!",
+            id: 101, // Fixed ID for daily reminder to avoid duplicates
+            schedule: {
+              on: {
+                hour,
+                minute,
+              },
+              repeats: true,
+              allowWhileIdle: true,
+            },
+            sound: 'default',
+          },
+        ],
+      });
+      console.log(`Daily reminder scheduled for ${hour}:${minute}`);
     } else {
-      console.log('Local notifications are only available on native platforms.');
+      console.log('Daily reminders: Only available on native platforms.');
     }
   },
 };

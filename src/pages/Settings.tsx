@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Card from '../components/ui/Card';
 import { Shield, HelpCircle, Mail, Bell, ChevronRight, ExternalLink, Zap } from 'lucide-react';
 import { SubscriptionService } from '../services/SubscriptionService';
+import { NotificationService } from '../services/NotificationService';
 
 interface SettingItem {
   icon: React.ReactNode;
@@ -21,6 +22,18 @@ interface SettingSection {
 const Settings: React.FC = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+
+  const toggleNotifications = async () => {
+    const newValue = !notificationsEnabled;
+    setNotificationsEnabled(newValue);
+    if (newValue) {
+      const granted = await NotificationService.requestPermissions();
+      if (granted) {
+        // Default to 8:00 PM for daily reminder
+        await NotificationService.scheduleDailyReminder(20, 0);
+      }
+    }
+  };
 
   const handleUpgrade = async () => {
     setIsLoading(true);
@@ -70,7 +83,7 @@ const Settings: React.FC = () => {
           description: 'Manage app notifications', 
           toggle: true,
           value: notificationsEnabled,
-          onToggle: () => setNotificationsEnabled(!notificationsEnabled)
+          onToggle: toggleNotifications
         },
       ]
     },

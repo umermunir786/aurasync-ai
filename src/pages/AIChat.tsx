@@ -1,13 +1,45 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, User, Bot, Sparkles, Image as ImageIcon, Paperclip } from 'lucide-react';
+import { Send, User, Bot, Sparkles, Paperclip, RefreshCw } from 'lucide-react';
 import { useAIChat } from '../hooks/useAIChat';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import { ActivityService } from '../services/ActivityService';
+import { motion } from 'framer-motion';
 
 const AIChat: React.FC = () => {
   const { messages, sendMessage, isLoading } = useAIChat();
   const [input, setInput] = useState('');
+  const [recommendations, setRecommendations] = useState<string[]>([]);
+  const [isFetchingRecs, setIsFetchingRecs] = useState(false);
+  const [historyStats, setHistoryStats] = useState({ calories: 0, steps: 0 });
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const fetchRecommendations = async () => {
+    setIsFetchingRecs(true);
+    try {
+      const recs = await ActivityService.getRecommendations();
+      setRecommendations(recs);
+    } catch (err) {
+      console.error('Failed to fetch recommendations:', err);
+    } finally {
+      setIsFetchingRecs(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const activities = await ActivityService.getRecentActivities();
+      const totalCals = activities.reduce((acc, curr) => acc + curr.calories_burned, 0);
+      setHistoryStats({ calories: Math.round(totalCals), steps: 8400 }); // Mock steps for now
+    } catch (err) {
+      console.error('Failed to fetch stats:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchRecommendations();
+    fetchStats();
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -32,8 +64,40 @@ const AIChat: React.FC = () => {
           <h1 className="text-3xl font-bold text-white flex items-center">
             <Sparkles className="mr-2 text-indigo-400" size={28} /> AI Coach
           </h1>
-          <p className="text-slate-400">Ask anything about your fitness, nutrition, or health data.</p>
+          <p className="text-slate-400">Personalized health advice based on your history.</p>
         </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={fetchRecommendations}
+          disabled={isFetchingRecs}
+          className="border-white/10 text-slate-400 hover:text-white"
+        >
+          {isFetchingRecs ? <RefreshCw size={14} className="mr-2 animate-spin" /> : <Sparkles size={14} className="mr-2" />}
+          Refresh Insights
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {recommendations.length > 0 ? (
+          recommendations.map((rec, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: i * 0.1 }}
+            >
+              <Card className="p-4 bg-indigo-500/5 border-indigo-500/10 hover:border-indigo-500/30 transition-all cursor-default group">
+                <div className="flex gap-3">
+                  <div className="mt-1 w-2 h-2 rounded-full bg-indigo-500 shrink-0 group-hover:scale-125 transition-transform" />
+                  <p className="text-xs text-slate-300 leading-relaxed font-medium">{rec}</p>
+                </div>
+              </Card>
+            </motion.div>
+          ))
+        ) : (
+          !isFetchingRecs && <p className="col-span-3 text-center text-slate-600 text-xs py-2 italic">Getting your daily health insights...</p>
+        )}
       </div>
 
       <Card className="flex-1 flex flex-col p-0 overflow-hidden border-white/5" glass={true}>
@@ -104,11 +168,11 @@ const AIChat: React.FC = () => {
             </div>
           </form>
           <div className="mt-2 flex items-center justify-center space-x-4 text-[10px] text-slate-600 uppercase tracking-widest font-bold">
-            <span>Burned 1.2k kcal today</span>
+            <span>Burned {historyStats.calories} kcal today</span>
             <span className="w-1 h-1 bg-slate-700 rounded-full"></span>
             <span>Weight-loss plan active</span>
             <span className="w-1 h-1 bg-slate-700 rounded-full"></span>
-            <span>8.4k steps reached</span>
+            <span>{historyStats.steps / 1000}k steps reached</span>
           </div>
         </div>
       </Card>

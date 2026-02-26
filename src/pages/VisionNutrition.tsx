@@ -5,11 +5,42 @@ import Button from '../components/ui/Button';
 import { VisionService } from '../services/VisionService';
 import type { FoodAnalysis } from '../services/VisionService';
 import { motion, AnimatePresence } from 'framer-motion';
+import api from '../api/axios';
+import { format } from 'date-fns';
+
+interface NutritionLog {
+  id: number;
+  item_name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  confidence: number;
+  created_at: string;
+}
 
 const VisionNutrition: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [results, setResults] = useState<FoodAnalysis[] | null>(null);
   const [isLogged, setIsLogged] = useState(false);
+  const [recentScans, setRecentScans] = useState<NutritionLog[]>([]);
+  const [isLoadingScans, setIsLoadingScans] = useState(false);
+
+  const fetchRecentScans = async () => {
+    setIsLoadingScans(true);
+    try {
+      const response = await api.get<NutritionLog[]>('/ai/recent-scans');
+      setRecentScans(response.data);
+    } catch (err) {
+      console.error('Failed to fetch recent scans:', err);
+    } finally {
+      setIsLoadingScans(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchRecentScans();
+  }, []);
 
   const handleCapture = async () => {
     setIsAnalyzing(true);
@@ -25,9 +56,30 @@ const VisionNutrition: React.FC = () => {
     }
   };
 
-  const handleLog = () => {
+  const handleLog = async () => {
+    if (!results || results.length === 0) return;
+    
     setIsLogged(true);
-    setTimeout(() => setIsLogged(false), 2000);
+    try {
+      // Log each item in the results
+      // In a more complex app, we might want a bulk log endpoint
+      for (const item of results) {
+        await api.post('/ai/log-nutrition', {
+          item_name: item.item,
+          calories: item.calories,
+          protein: item.protein,
+          carbs: item.carbs,
+          fat: item.fat,
+          confidence: item.confidence
+        });
+      }
+      await fetchRecentScans();
+    } catch (err) {
+      console.error('Failed to log nutrition:', err);
+      setIsLogged(false);
+    } finally {
+      setTimeout(() => setIsLogged(false), 2000);
+    }
   };
 
   const totalMacros = results?.reduce((acc, curr) => ({
@@ -148,14 +200,26 @@ const VisionNutrition: React.FC = () => {
                   Recent Scans
                 </h3>
                 <div className="space-y-4 text-xs">
-                  <div className="flex justify-between items-center text-slate-400 mb-1">
-                    <span>Yesterday, 08:30 PM</span>
-                    <span className="font-bold text-white">420 kcal</span>
-                  </div>
-                  <div className="flex justify-between items-center text-slate-400">
-                    <span>Yesterday, 12:15 PM</span>
-                    <span className="font-bold text-white">680 kcal</span>
-                  </div>
+                  {isLoadingScans ? (
+                    <div className="flex justify-center p-4">
+                      <Loader2 size={16} className="animate-spin text-slate-500" />
+                    </div>
+                  ) : recentScans.length > 0 ? (
+                    recentScans.map((scan) => (
+                      <div key={scan.id} className="flex justify-between items-center text-slate-400 mb-1 border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                        <div className="flex flex-col">
+                          <span className="text-white font-medium">{scan.item_name}</span>
+                          <span className="text-[10px]">{format(new Date(scan.created_at), 'MMM d, hh:mm a')}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-bold text-white">{scan.calories} kcal</span>
+                          <span className="text-[10px] block opacity-50">{Math.round(scan.confidence * 100)}% conf.</span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-slate-500 text-center py-4">No recent scans found.</p>
+                  )}
                 </div>
               </Card>
             </div>
