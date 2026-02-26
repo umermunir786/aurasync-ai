@@ -7,6 +7,7 @@ import {
   MessageSquare, 
   BarChart3, 
   User,
+  Camera,
   Settings,
   LogOut
 } from 'lucide-react';
@@ -22,6 +23,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const navItems = [
     { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
     { name: 'Activities', icon: <Activity size={20} />, path: '/activities' },
+    { name: 'AI Nutrition', icon: <Camera size={20} />, path: '/vision-nutrition' },
     { name: 'Goals', icon: <Target size={20} />, path: '/goals' },
     { name: 'AI Chat', icon: <MessageSquare size={20} />, path: '/ai-chat' },
     { name: 'Analytics', icon: <BarChart3 size={20} />, path: '/analytics' },

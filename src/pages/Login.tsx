@@ -77,6 +77,7 @@ const Login: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
+       navigate('/dashboard', { replace: true });
       // Simulate/Attempt login
       const response = await api.post('/login', data);
       const { user, access_token } = response.data;
