@@ -1,0 +1,40 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - 'aurasync-backend/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Create app directory if it doesn't exist
+            if [ ! -d "~/aurasync-app" ]; then
+              git clone https://github.com/umermunir786/aurasync-ai.git ~/aurasync-app
+            fi
+
+            cd ~/aurasync-app
+            git pull origin ${{ github.ref_name }}
+
+            # Navigate to the backend folder
+            cd aurasync-backend
+
+            # Rebuild and restart container
+            docker build -t aurasync-api .
+            docker stop aurasync-api || true
+            docker rm aurasync-api || true
+            docker run -d --name aurasync-api -p 8000:8000 --env-file .env --restart unless-stopped aurasync-api
