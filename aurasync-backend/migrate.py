@@ -26,12 +26,16 @@ add_column("user", "weight", "INTEGER")
 add_column("user", "height", "INTEGER")
 add_column("user", "age", "INTEGER")
 add_column("user", "gender", "VARCHAR")
+add_column("user", "subscription_tier", "VARCHAR DEFAULT 'free'")
+add_column("user", "subscription_end_date", "DATETIME")
 
 # NutritionLog table columns
 add_column("nutritionlog", "image_url", "VARCHAR")
 
 # ActivityLog table columns
 add_column("activitylog", "image_url", "VARCHAR")
+add_column("activitylog", "quantity", "FLOAT")
+add_column("activitylog", "unit", "VARCHAR")
 
 conn.commit()
 conn.close()

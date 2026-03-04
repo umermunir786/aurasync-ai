@@ -10,33 +10,28 @@ import {
   Droplets, 
   Target, 
   TrendingUp,
-  Plus,
-  ArrowUpRight,
-  ArrowDownRight
+  Plus
 } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import { Link } from 'react-router-dom';
 import { useGoals } from '../hooks/useGoals';
 import { useActivities } from '../hooks/useActivities';
+import { useWeight } from '../hooks/useWeight';
 import { NotificationService } from '../services/NotificationService';
 import { useAuth } from '../hooks/useAuth';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
-const weightData = [
-  { name: 'Mon', weight: 80.5 },
-  { name: 'Tue', weight: 80.2 },
-  { name: 'Wed', weight: 81.0 },
-  { name: 'Thu', weight: 80.7 },
-  { name: 'Fri', weight: 79.9 },
-  { name: 'Sat', weight: 79.5 },
-  { name: 'Sun', weight: 79.8 },
-];
+import Skeleton from '../components/ui/Skeleton';
 
 const Dashboard: React.FC = () => {
-  const { goals } = useGoals();
-  const { activities } = useActivities();
+  const { goals, isLoading: goalsLoading } = useGoals();
+  const { activities, isLoading: actsLoading } = useActivities();
+  const { weightHistory, isLoading: weightLoading } = useWeight();
   const { user } = useAuth();
+
+  const isDataLoading = goalsLoading || actsLoading || weightLoading;
 
   useEffect(() => {
     const initNotifications = async () => {
@@ -47,6 +42,34 @@ const Dashboard: React.FC = () => {
     };
     initNotifications();
   }, []);
+
+  if (isDataLoading) {
+    return (
+      <div className="p-6 space-y-8 bg-slate-950 min-h-screen">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <div className="flex space-x-3">
+            <Skeleton className="h-10 w-32 rounded-xl" />
+            <Skeleton className="h-10 w-32 rounded-xl" />
+          </div>
+        </div>
+        <Skeleton className="h-24 w-full" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <Skeleton className="lg:col-span-2 h-[350px]" />
+          <Skeleton className="h-[350px]" />
+        </div>
+      </div>
+    );
+  }
 
   // Calculate Health Metrics
   const calculateBMI = () => {
@@ -98,37 +121,69 @@ const Dashboard: React.FC = () => {
 
   const todayStr = new Date().toISOString().split('T')[0];
   const todayActivities = activities?.filter(a => a.created_at?.startsWith(todayStr)) || [];
-  const todayCalories = todayActivities.reduce((acc, curr) => acc + curr.calories_burned, 0);
   
-  // Mock step calculation (100 steps per min of activity for demo)
-  const todaySteps = todayActivities.reduce((acc, curr) => acc + (curr.duration_minutes * 100), 0);
+  const todayCalories = todayActivities.reduce((acc, curr) => acc + (curr.calories_burned || 0), 0);
+  const todaySteps = todayActivities.reduce((acc, curr) => {
+    if (curr.activity_type.toLowerCase().includes('running')) return acc + (curr.duration_minutes || 0) * 150;
+    if (curr.activity_type.toLowerCase().includes('walking')) return acc + (curr.duration_minutes || 0) * 100;
+    return acc;
+  }, 0);
+  const todayWater = todayActivities
+    .filter(a => a.activity_type.toLowerCase().includes('water'))
+    .reduce((acc, curr) => acc + (curr.quantity || 0), 0) / 1000; // ml to L
 
   const goalPcnt = [
     { name: 'Steps', value: Math.min(100, Math.round((todaySteps / stepGoal) * 100)), fill: '#6366f1' },
     { name: 'Calories', value: Math.min(100, Math.round((todayCalories / calorieGoal) * 100)), fill: '#a855f7' },
-    { name: 'Water', value: 0, fill: '#06b6d4' },
+    { name: 'Water', value: Math.min(100, Math.round((todayWater / waterGoalValue) * 100)), fill: '#06b6d4' },
   ];
 
-  const activityData = activities?.slice(0, 7).map(a => {
-    const activityDate = a.created_at ? new Date(a.created_at) : new Date();
-    const name = isNaN(activityDate.getTime()) 
-      ? 'Day' 
-      : activityDate.toLocaleDateString('en-US', { weekday: 'short' });
-      
+  // Weight History Data
+  const weightData = weightHistory && weightHistory.length > 0
+    ? weightHistory.map(w => ({
+        name: new Date(w.recorded_at).toLocaleDateString('en-US', { weekday: 'short' }),
+        weight: w.weight
+      }))
+    : [];
+
+  // Weekly Activity Analysis Data
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    return d.toISOString().split('T')[0];
+  }).reverse();
+
+  const activityData = last7Days.map(date => {
+    const dayActivities = activities?.filter(a => a.created_at?.startsWith(date)) || [];
+    const dayCals = dayActivities.reduce((acc, curr) => acc + (curr.calories_burned || 0), 0);
     return {
-      name,
-      calories: a.calories_burned,
-      steps: a.duration_minutes * 100
+      name: new Date(date).toLocaleDateString('en-US', { weekday: 'short' }),
+      calories: dayCals
     };
-  }).reverse() || [
-    { name: 'Mon', calories: 2400, steps: 8000 },
-    { name: 'Tue', calories: 2100, steps: 6500 },
-    { name: 'Wed', calories: 2800, steps: 11000 },
-    { name: 'Thu', calories: 2300, steps: 9000 },
-    { name: 'Fri', calories: 2600, steps: 10500 },
-    { name: 'Sat', calories: 1900, steps: 12000 },
-    { name: 'Sun', calories: 2200, steps: 8500 },
-  ];
+  });
+
+  const hasWeightData = weightData.length > 0;
+  const hasActivityData = activityData.some(d => d.calories > 0);
+  const goalsSet = goals && goals.length > 0;
+  const hasGoalProgress = goalPcnt.some(g => g.value > 0);
+
+  const NoDataFallback = ({ message, showButton }: { message: string, showButton?: boolean }) => (
+    <div className="h-full w-full flex flex-col items-center justify-center text-slate-500 space-y-4">
+      <div className="p-4 bg-white/5 rounded-[24px] border border-white/10 shadow-inner">
+        <Target size={32} className="opacity-20 translate-y-0.5" />
+      </div>
+      <div className="text-center space-y-1">
+        <p className="text-sm italic font-medium">{message}</p>
+        {showButton && (
+          <Link to="/goals" className="block mt-2">
+            <Button variant="ghost" size="sm" className="text-indigo-400 hover:text-indigo-300">
+              Set Goals Now
+            </Button>
+          </Link>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div id="dashboard-content" className="p-6 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 bg-slate-950 min-h-screen">
@@ -141,9 +196,11 @@ const Dashboard: React.FC = () => {
           <Button variant="secondary" size="sm" onClick={handleDownloadReport}>
             Download Report
           </Button>
-          <Button size="sm">
-            <Plus size={18} className="mr-2" /> Log Activity
-          </Button>
+          <Link to="/activities">
+            <Button size="sm">
+              <Plus size={18} className="mr-2" /> Log Activity
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -152,28 +209,30 @@ const Dashboard: React.FC = () => {
         <Card className="grid grid-cols-2 md:grid-cols-4 gap-6" glass={true}>
           <div className="space-y-1">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Weight</p>
-            <p className="text-2xl font-bold text-white">{user?.weight} kg</p>
+            <p className="text-2xl font-bold text-white">{user?.weight || '-'} kg</p>
           </div>
           <div className="space-y-1">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Height</p>
-            <p className="text-2xl font-bold text-white">{user?.height} cm</p>
+            <p className="text-2xl font-bold text-white">{user?.height || '-'} cm</p>
           </div>
           <div className="space-y-1 border-l border-white/10 pl-6">
             <p className="text-xs font-semibold text-indigo-400 uppercase tracking-widest">BMI Index</p>
             <div className="flex items-center gap-2">
-              <p className="text-2xl font-bold text-white">{bmi}</p>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                parseFloat(bmi || '0') < 18.5 ? 'bg-indigo-500/20 text-indigo-400' :
-                parseFloat(bmi || '0') < 25 ? 'bg-green-500/20 text-green-400' :
-                'bg-orange-500/20 text-orange-400'
-              }`}>
-                {parseFloat(bmi || '0') < 18.5 ? 'Under' : parseFloat(bmi || '0') < 25 ? 'Normal' : 'Over'}
-              </span>
+              <p className="text-2xl font-bold text-white">{bmi || '-'}</p>
+              {bmi && (
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                  parseFloat(bmi) < 18.5 ? 'bg-indigo-500/20 text-indigo-400' :
+                  parseFloat(bmi) < 25 ? 'bg-green-500/20 text-green-400' :
+                  'bg-orange-500/20 text-orange-400'
+                }`}>
+                  {parseFloat(bmi) < 18.5 ? 'Under' : parseFloat(bmi) < 25 ? 'Normal' : 'Over'}
+                </span>
+              )}
             </div>
           </div>
           <div className="space-y-1 border-l border-white/10 pl-6">
             <p className="text-xs font-semibold text-purple-400 uppercase tracking-widest">Daily BMR</p>
-            <p className="text-2xl font-bold text-white">{bmr} <span className="text-sm font-normal text-slate-400">kcal</span></p>
+            <p className="text-2xl font-bold text-white">{bmr || '-'} <span className="text-sm font-normal text-slate-400">kcal</span></p>
           </div>
         </Card>
       )}
@@ -187,10 +246,8 @@ const Dashboard: React.FC = () => {
           <div>
             <p className="text-sm text-slate-400">Calories Burned</p>
             <div className="flex items-baseline space-x-2">
-              <h3 className="text-2xl font-bold text-white">1,284</h3>
-              <span className="text-xs text-green-400 flex items-center">
-                <ArrowUpRight size={14} className="mr-0.5" /> 12%
-              </span>
+              <h3 className="text-2xl font-bold text-white">{Math.round(todayCalories)}</h3>
+              <span className="text-xs text-slate-500">kcal</span>
             </div>
           </div>
         </Card>
@@ -202,10 +259,8 @@ const Dashboard: React.FC = () => {
           <div>
             <p className="text-sm text-slate-400">Steps Taken</p>
             <div className="flex items-baseline space-x-2">
-              <h3 className="text-2xl font-bold text-white">8,432</h3>
-              <span className="text-xs text-green-400 flex items-center">
-                <ArrowUpRight size={14} className="mr-0.5" /> 5%
-              </span>
+              <h3 className="text-2xl font-bold text-white">{Math.round(todaySteps)}</h3>
+              <span className="text-xs text-slate-500">/ {stepGoal}</span>
             </div>
           </div>
         </Card>
@@ -217,7 +272,7 @@ const Dashboard: React.FC = () => {
           <div>
             <p className="text-sm text-slate-400">Water Intake</p>
             <div className="flex items-baseline space-x-2">
-              <h3 className="text-2xl font-bold text-white">2.4L</h3>
+              <h3 className="text-2xl font-bold text-white">{todayWater.toFixed(1)}L</h3>
               <span className="text-xs text-slate-400">/ {waterGoalValue}L</span>
             </div>
           </div>
@@ -228,12 +283,10 @@ const Dashboard: React.FC = () => {
             <Target size={24} />
           </div>
           <div>
-            <p className="text-sm text-slate-400">Sleep Duration</p>
+            <p className="text-sm text-slate-400">Active Goals</p>
             <div className="flex items-baseline space-x-2">
-              <h3 className="text-2xl font-bold text-white">7h 20m</h3>
-              <span className="text-xs text-red-400 flex items-center">
-                <ArrowDownRight size={14} className="mr-0.5" /> 2%
-              </span>
+              <h3 className="text-2xl font-bold text-white">{goals?.length || 0}</h3>
+              <span className="text-xs text-slate-500">set</span>
             </div>
           </div>
         </Card>
@@ -249,28 +302,30 @@ const Dashboard: React.FC = () => {
             </h3>
             <select className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-slate-400 focus:outline-none">
               <option>Last 7 Days</option>
-              <option>Last 30 Days</option>
             </select>
           </div>
           <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={weightData}>
-                <defs>
-                  <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#818cf8" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} domain={['dataMin - 1', 'dataMax + 1']} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '16px', backdropFilter: 'blur(10px)' }}
-                  itemStyle={{ color: '#fff' }}
-                />
-                <Area type="monotone" dataKey="weight" stroke="#818cf8" strokeWidth={4} fillOpacity={1} fill="url(#colorWeight)" />
-              </AreaChart>
-            </ResponsiveContainer>
+            {hasWeightData ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={weightData}>
+                  <defs>
+                    <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#818cf8" stopOpacity={0.4}/>
+                      <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} domain={['dataMin - 1', 'dataMax + 1']} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '16px', backdropFilter: 'blur(10px)' }}
+                    itemStyle={{ color: '#fff' }}
+                  />
+                  <Legend verticalAlign="top" height={36} iconType="circle" />
+                  <Area name="Weight (kg)" type="monotone" dataKey="weight" stroke="#818cf8" strokeWidth={4} fillOpacity={1} fill="url(#colorWeight)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : <NoDataFallback message="Start logging your weight to see progress." />}
           </div>
         </Card>
 
@@ -278,20 +333,24 @@ const Dashboard: React.FC = () => {
         <Card className="space-y-6">
           <h3 className="text-lg font-semibold text-white">Goal Completion</h3>
           <div className="h-[300px] w-full flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadialBarChart cx="50%" cy="50%" innerRadius="30%" outerRadius="100%" barSize={15} data={goalPcnt}>
-                <RadialBar
-                  label={{ position: 'insideStart', fill: '#fff' }}
-                  background={{ fill: 'rgba(255,255,255,0.05)' }}
-                  dataKey="value"
-                  cornerRadius={10}
-                />
-                <Legend iconSize={10} layout="vertical" verticalAlign="bottom" wrapperStyle={{ paddingBottom: '20px' }} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '16px' }}
-                />
-              </RadialBarChart>
-            </ResponsiveContainer>
+            {!goalsSet ? (
+              <NoDataFallback message="No fitness goals set yet." showButton />
+            ) : hasGoalProgress ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <RadialBarChart cx="50%" cy="50%" innerRadius="30%" outerRadius="100%" barSize={15} data={goalPcnt}>
+                  <RadialBar
+                    label={{ position: 'insideStart', fill: '#fff' }}
+                    background={{ fill: 'rgba(255,255,255,0.05)' }}
+                    dataKey="value"
+                    cornerRadius={10}
+                  />
+                  <Legend iconSize={10} layout="vertical" verticalAlign="bottom" wrapperStyle={{ paddingBottom: '20px' }} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '16px' }}
+                  />
+                </RadialBarChart>
+              </ResponsiveContainer>
+            ) : <NoDataFallback message="No goal progress tracked today." />}
           </div>
         </Card>
 
@@ -299,18 +358,21 @@ const Dashboard: React.FC = () => {
         <Card className="lg:col-span-3 space-y-6">
           <h3 className="text-lg font-semibold text-white">Weekly Activity Analysis</h3>
           <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={activityData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                <Tooltip 
-                  cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '16px' }}
-                />
-                <Bar dataKey="calories" fill="#22d3ee" radius={[8, 8, 0, 0]} barSize={40} />
-              </BarChart>
-            </ResponsiveContainer>
+            {hasActivityData ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={activityData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                  <Tooltip 
+                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '16px' }}
+                  />
+                  <Legend verticalAlign="top" height={36} iconType="circle" />
+                  <Bar name="Calories Burned" dataKey="calories" fill="#22d3ee" radius={[8, 8, 0, 0]} barSize={40} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : <NoDataFallback message="No activities recorded this week." />}
           </div>
         </Card>
       </div>

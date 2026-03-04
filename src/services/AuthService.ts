@@ -6,6 +6,8 @@ export interface User {
   full_name: string;
   is_verified: boolean;
   onboarded: boolean;
+  subscription_tier: string;
+  subscription_end_date?: string;
   weight?: number;
   height?: number;
   age?: number;

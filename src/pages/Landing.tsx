@@ -14,6 +14,7 @@ import {
 import { Link } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
+import { PricingSection } from './Pricing';
 
 const Landing: React.FC = () => {
   return (
@@ -170,6 +171,11 @@ const Landing: React.FC = () => {
             ))}
           </div>
         </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" className="py-32 px-6">
+        <PricingSection isPublic={true} />
       </section>
 
       {/* Footer */}

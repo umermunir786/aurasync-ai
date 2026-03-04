@@ -4,9 +4,11 @@ import api from '../api/axios';
 export interface Activity {
   id: number;
   activity_type: string;
-  duration_minutes: number;
-  intensity: string;
-  calories_burned: number;
+  duration_minutes?: number;
+  intensity?: string;
+  calories_burned?: number;
+  quantity?: number;
+  unit?: string;
   image_url?: string;
   created_at: string;
 }
@@ -20,10 +22,19 @@ export const useActivities = () => {
       const response = await api.get<Activity[]>('/ai/recent-activities');
       return response.data;
     },
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const addActivity = useMutation({
-    mutationFn: async (newActivity: { activity_type: string, duration_minutes: number, intensity: string, calories_burned: number, image_url?: string }) => {
+    mutationFn: async (newActivity: { 
+      activity_type: string, 
+      duration_minutes?: number, 
+      intensity?: string, 
+      calories_burned?: number, 
+      quantity?: number,
+      unit?: string,
+      image_url?: string 
+    }) => {
       const response = await api.post<Activity>('/ai/log-activity', newActivity);
       return response.data;
     },

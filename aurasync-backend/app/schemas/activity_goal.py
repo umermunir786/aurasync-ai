@@ -5,9 +5,11 @@ from pydantic import BaseModel
 # Activity Schemas
 class ActivityLogBase(BaseModel):
     activity_type: str
-    duration_minutes: int
-    intensity: str
-    calories_burned: float
+    duration_minutes: Optional[int] = None
+    intensity: Optional[str] = None
+    calories_burned: Optional[float] = None
+    quantity: Optional[float] = None
+    unit: Optional[str] = None
     image_url: Optional[str] = None
 
 class ActivityLogCreate(ActivityLogBase):

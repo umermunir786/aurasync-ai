@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { 
-  User, 
+  User as UserIcon, 
   Mail, 
-  Phone, 
   Camera, 
   Scale, 
   Ruler, 
@@ -13,7 +12,9 @@ import {
   ChevronRight,
   Info,
   Zap,
-  ArrowRight
+  ArrowRight,
+  Calendar as CalendarIcon,
+  Crown
 } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -25,8 +26,7 @@ import { useAuth } from '../hooks/useAuth';
 import { AuthService } from '../services/AuthService';
 
 const Profile: React.FC = () => {
-  const { user } = useAuth();
-  const [bmi, setBmi] = useState({ height: 180, weight: 75, result: 23.1 });
+  const { user, setUser } = useAuth();
   const [showCalorieModal, setShowCalorieModal] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -35,6 +35,14 @@ const Profile: React.FC = () => {
   const [formData, setFormData] = useState({
     full_name: user?.full_name || '',
     email: user?.email || '',
+    weight: user?.weight || 0,
+    height: user?.height || 0,
+    age: user?.age || 0,
+    gender: user?.gender || 'Male',
+  });
+
+  const [bmi, setBmi] = useState({ 
+    result: user?.weight && user?.height ? parseFloat((user.weight / ((user.height / 100) ** 2)).toFixed(1)) : 0 
   });
 
   const handleUpdateProfile = async () => {
@@ -42,12 +50,35 @@ const Profile: React.FC = () => {
     setUpdateMsg(null);
     try {
       await AuthService.updateProfile(formData);
+      // Refresh local user state
+      const updatedUser = await AuthService.getProfile();
+      setUser(updatedUser);
       setUpdateMsg({ type: 'success', text: 'Profile updated successfully!' });
     } catch (err: any) {
       setUpdateMsg({ type: 'error', text: err.response?.data?.detail || 'Failed to update profile' });
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  const calculateBMI = (h: number, w: number) => {
+    if (!h || !w) return;
+    const heightInMeters = h / 100;
+    const result = w / (heightInMeters * heightInMeters);
+    setBmi({ result: parseFloat(result.toFixed(1)) });
+  };
+
+  // Update BMI when weight or height changes
+  React.useEffect(() => {
+    calculateBMI(formData.height, formData.weight);
+  }, [formData.height, formData.weight]);
+
+  const getBMICategory = (val: number) => {
+    if (val === 0) return { label: 'Enter Data', color: 'text-slate-500' };
+    if (val < 18.5) return { label: 'Underweight', color: 'text-blue-400' };
+    if (val < 25) return { label: 'Healthy', color: 'text-green-400' };
+    if (val < 30) return { label: 'Overweight', color: 'text-yellow-400' };
+    return { label: 'Obese', color: 'text-red-400' };
   };
 
   const handleAvatarClick = async () => {
@@ -89,19 +120,6 @@ const Profile: React.FC = () => {
     }
   };
 
-  const calculateBMI = (h: number, w: number) => {
-    const heightInMeters = h / 100;
-    const result = w / (heightInMeters * heightInMeters);
-    setBmi({ height: h, weight: w, result: parseFloat(result.toFixed(1)) });
-  };
-
-  const getBMICategory = (val: number) => {
-    if (val < 18.5) return { label: 'Underweight', color: 'text-blue-400' };
-    if (val < 25) return { label: 'Healthy', color: 'text-green-400' };
-    if (val < 30) return { label: 'Overweight', color: 'text-yellow-400' };
-    return { label: 'Obese', color: 'text-red-400' };
-  };
-
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12">
       <div className="flex items-center justify-between">
@@ -121,7 +139,7 @@ const Profile: React.FC = () => {
                   {avatarUrl ? (
                     <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
-                    <User size={64} className="text-slate-700" />
+                    <UserIcon size={64} className="text-slate-700" />
                   )}
                 </div>
               </div>
@@ -144,6 +162,18 @@ const Profile: React.FC = () => {
               <div>
                 <p className="text-xl font-bold text-white">1.2k</p>
                 <p className="text-[10px] text-slate-500 uppercase font-bold">Points</p>
+              </div>
+            </div>
+            <div className="pt-4 flex flex-col items-center">
+              <div className={`px-4 py-1.5 rounded-full flex items-center gap-2 border shadow-lg transition-all ${
+                user?.subscription_tier === 'pro' 
+                  ? 'bg-gradient-to-r from-amber-600/20 to-yellow-600/20 border-amber-500/30 text-amber-400 font-bold' 
+                  : 'bg-white/5 border-white/10 text-slate-400'
+              }`}>
+                <Crown size={14} className={user?.subscription_tier === 'pro' ? 'text-amber-400' : 'text-slate-500'} />
+                <span className="text-[10px] uppercase tracking-[0.15em]">
+                  {user?.subscription_tier || 'Free'} Plan
+                </span>
               </div>
             </div>
           </Card>
@@ -183,7 +213,7 @@ const Profile: React.FC = () => {
                 label="Full Name" 
                 value={formData.full_name} 
                 onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                icon={<User size={18} />} 
+                icon={<UserIcon size={18} />} 
               />
               <Input 
                 label="Email Address" 
@@ -191,15 +221,39 @@ const Profile: React.FC = () => {
                 disabled
                 icon={<Mail size={18} />} 
               />
-              <Input label="Phone Number" defaultValue="+1 (555) 000-0000" icon={<Phone size={18} />} />
+              <Input 
+                label="Age" 
+                type="number"
+                value={formData.age} 
+                onChange={(e) => setFormData({ ...formData, age: parseInt(e.target.value) || 0 })}
+                icon={<CalendarIcon size={18} className="text-slate-400" />} 
+              />
               <div className="flex flex-col space-y-2">
                 <label className="text-sm font-medium text-slate-300 ml-1">Gender</label>
-                <select className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
-                  <option>Male</option>
-                  <option>Female</option>
-                  <option>Other</option>
+                <select 
+                  value={formData.gender}
+                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                >
+                  <option value="Male" className="bg-slate-900">Male</option>
+                  <option value="Female" className="bg-slate-900">Female</option>
+                  <option value="Other" className="bg-slate-900">Other</option>
                 </select>
               </div>
+              <Input 
+                label="Weight (kg)" 
+                type="number"
+                value={formData.weight} 
+                onChange={(e) => setFormData({ ...formData, weight: parseInt(e.target.value) || 0 })}
+                icon={<Scale size={18} className="text-slate-400" />} 
+              />
+              <Input 
+                label="Height (cm)" 
+                type="number"
+                value={formData.height} 
+                onChange={(e) => setFormData({ ...formData, height: parseInt(e.target.value) || 0 })}
+                icon={<Ruler size={18} className="text-slate-400" />} 
+              />
             </div>
             <div className="flex justify-end pt-4">
               <Button onClick={handleUpdateProfile} isLoading={isUpdating}>Save Changes</Button>
@@ -210,37 +264,16 @@ const Profile: React.FC = () => {
             {/* BMI Calculator */}
             <Card className="space-y-6 border-indigo-500/20">
               <h3 className="text-lg font-bold text-white flex items-center">
-                <CalcIcon className="mr-2 text-indigo-400" size={20} /> BMI Calculator
+                <CalcIcon className="mr-2 text-indigo-400" size={20} /> Body Mass Index (BMI)
               </h3>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase ml-1 flex items-center">
-                      <Ruler size={12} className="mr-1" /> Height (cm)
-                    </label>
-                    <input 
-                      type="number" 
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
-                      value={bmi.height}
-                      onChange={(e) => calculateBMI(Number(e.target.value), bmi.weight)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase ml-1 flex items-center">
-                      <Scale size={12} className="mr-1" /> Weight (kg)
-                    </label>
-                    <input 
-                      type="number" 
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
-                      value={bmi.weight}
-                      onChange={(e) => calculateBMI(bmi.height, Number(e.target.value))}
-                    />
-                  </div>
-                </div>
+                <p className="text-sm text-slate-400">
+                  Your BMI is calculated automatically based on the weight and height in your profile.
+                </p>
 
-                <div className="p-4 bg-indigo-600/10 rounded-2xl border border-indigo-500/20 text-center space-y-1">
-                  <p className="text-[10px] text-slate-500 uppercase font-bold">Your BMI Score</p>
-                  <h4 className="text-3xl font-black text-white">{bmi.result}</h4>
+                <div className="p-6 bg-indigo-600/10 rounded-2xl border border-indigo-500/20 text-center space-y-1">
+                  <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Calculated Score</p>
+                  <h4 className="text-4xl font-black text-white">{bmi.result || '--'}</h4>
                   <p className={`text-sm font-bold ${getBMICategory(bmi.result).color}`}>
                     {getBMICategory(bmi.result).label}
                   </p>

@@ -8,9 +8,11 @@ class ActivityLog(Base):
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     activity_type = Column(String, index=True) # e.g., Running, Cycling, Walking
     image_url = Column(String, nullable=True)
-    duration_minutes = Column(Integer)
-    intensity = Column(String) # e.g., Low, Medium, High
-    calories_burned = Column(Float)
+    duration_minutes = Column(Integer, nullable=True)
+    intensity = Column(String, nullable=True) # e.g., Low, Medium, High
+    calories_burned = Column(Float, nullable=True)
+    quantity = Column(Float, nullable=True)
+    unit = Column(String, nullable=True) # e.g., ml, oz, serving
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User")

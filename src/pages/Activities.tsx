@@ -10,27 +10,99 @@ import { useActivities, type Activity } from '../hooks/useActivities';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
+import Switch from '../components/ui/Switch';
+
+const PREDEFINED_ACTIVITIES = [
+  'Sleep',
+  'Water Intake',
+  'Cardio',
+  'Running',
+  'Meal',
+  'Walking',
+  'Cycling',
+  'Gym',
+  'Yoga'
+];
 
 const Activities: React.FC = () => {
   const { activities, addActivity, deleteActivity } = useActivities();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newActivity, setNewActivity] = useState({
-    activity_type: 'Running',
+  const [isCustom, setIsCustom] = useState(false);
+  const [newActivity, setNewActivity] = useState<{
+    activity_type: string;
+    duration_minutes?: number;
+    intensity?: string;
+    calories_burned?: number;
+    quantity?: number;
+    unit?: string;
+  }>({
+    activity_type: PREDEFINED_ACTIVITIES[0],
     duration_minutes: 30,
     intensity: 'Medium',
     calories_burned: 300
   });
 
+  const isWaterIntake = newActivity.activity_type.toLowerCase().includes('water');
+  const isMeal = newActivity.activity_type.toLowerCase().includes('meal');
+
+  const handleToggleCustom = (checked: boolean) => {
+    setIsCustom(checked);
+    if (!checked) {
+      setNewActivity({ 
+        activity_type: PREDEFINED_ACTIVITIES[0],
+        duration_minutes: 30,
+        intensity: 'Medium',
+        calories_burned: 300
+      });
+    } else {
+      setNewActivity({ activity_type: '' });
+    }
+  };
+
+  const handleTypeChange = (value: string) => {
+    const type = value;
+    if (type.toLowerCase().includes('water')) {
+      setNewActivity({
+        activity_type: type,
+        quantity: 250,
+        unit: 'ml'
+      });
+    } else if (type.toLowerCase().includes('meal')) {
+      setNewActivity({
+        activity_type: type,
+        quantity: 1,
+        unit: 'serving',
+        calories_burned: 500
+      });
+    } else {
+      setNewActivity({
+        activity_type: type,
+        duration_minutes: 30,
+        intensity: 'Medium',
+        calories_burned: 300
+      });
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!newActivity.activity_type.trim()) return;
     addActivity.mutate(newActivity);
     setIsAddModalOpen(false);
+    setIsCustom(false);
+    setNewActivity({
+      activity_type: PREDEFINED_ACTIVITIES[0],
+      duration_minutes: 30,
+      intensity: 'Medium',
+      calories_burned: 300
+    });
   };
 
   // Mock data if backend is not available for preview
   const mockActivities: Activity[] = [
     { id: 1, activity_type: 'Running', duration_minutes: 30, intensity: 'High', calories_burned: 450, created_at: new Date().toISOString() },
     { id: 2, activity_type: 'Walking', duration_minutes: 60, intensity: 'Low', calories_burned: 200, created_at: new Date().toISOString() },
+    { id: 3, activity_type: 'Water Intake', quantity: 500, unit: 'ml', created_at: new Date().toISOString() },
   ];
 
   const displayActivities = activities || mockActivities;
@@ -93,8 +165,8 @@ const Activities: React.FC = () => {
                 <thead>
                   <tr className="border-b border-white/5 bg-white/5">
                     <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Activity</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Duration</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Intensity</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Duration / Qty</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Intensity / Unit</th>
                     <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Calories</th>
                     <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Date</th>
                     <th className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider text-right">Actions</th>
@@ -116,20 +188,33 @@ const Activities: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-slate-300 font-semibold">{activity.duration_minutes}</span>
-                        <span className="ml-1 text-slate-500 text-sm">min</span>
+                        {activity.duration_minutes ? (
+                          <>
+                            <span className="text-slate-300 font-semibold">{activity.duration_minutes}</span>
+                            <span className="ml-1 text-slate-500 text-sm">min</span>
+                          </>
+                        ) : activity.quantity ? (
+                          <>
+                            <span className="text-slate-300 font-semibold">{activity.quantity}</span>
+                            <span className="ml-1 text-slate-500 text-sm">{activity.unit}</span>
+                          </>
+                        ) : <span className="text-slate-500">-</span>}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${
-                          activity.intensity === 'High' ? 'bg-red-500/10 text-red-400' :
-                          activity.intensity === 'Medium' ? 'bg-yellow-500/10 text-yellow-400' :
-                          'bg-green-500/10 text-green-400'
-                        }`}>
-                          {activity.intensity}
-                        </span>
+                        {activity.intensity ? (
+                          <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${
+                            activity.intensity === 'High' ? 'bg-red-500/10 text-red-400' :
+                            activity.intensity === 'Medium' ? 'bg-yellow-500/10 text-yellow-400' :
+                            'bg-green-500/10 text-green-400'
+                          }`}>
+                            {activity.intensity}
+                          </span>
+                        ) : activity.unit && !activity.duration_minutes ? (
+                          <span className="text-slate-400 text-sm uppercase font-semibold">{activity.unit}</span>
+                        ) : <span className="text-slate-500">-</span>}
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-300">
-                        {activity.calories_burned} kcal
+                        {activity.calories_burned ? `${activity.calories_burned} kcal` : '-'}
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-400">
                         {new Date(activity.created_at).toLocaleDateString()}
@@ -159,38 +244,88 @@ const Activities: React.FC = () => {
               <h3 className="text-xl font-bold text-white">Log Activity</h3>
               <button onClick={() => setIsAddModalOpen(false)} className="text-slate-400 hover:text-white">×</button>
             </div>
+            
+            <Switch 
+              label="Activity Mode"
+              leftLabel="Built-in"
+              rightLabel="Custom"
+              checked={isCustom}
+              onChange={handleToggleCustom}
+            />
+
             <form onSubmit={handleSubmit} className="space-y-4">
-              <Input 
-                label="Activity Type" 
-                value={newActivity.activity_type} 
-                onChange={(e) => setNewActivity({...newActivity, activity_type: e.target.value})}
-              />
-              <div className="grid grid-cols-2 gap-4">
+              {isCustom ? (
                 <Input 
-                  label="Duration (min)" 
-                  type="number" 
-                  value={newActivity.duration_minutes}
-                  onChange={(e) => setNewActivity({...newActivity, duration_minutes: Number(e.target.value)})}
+                  label="Custom Activity Name" 
+                  placeholder="e.g. Swimming, Basketball"
+                  value={newActivity.activity_type} 
+                  onChange={(e) => handleTypeChange(e.target.value)}
+                  required
                 />
+              ) : (
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-500 uppercase">Intensity</label>
+                  <label className="text-xs font-semibold text-slate-500 uppercase">Activity Type</label>
                   <select 
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 h-11 text-slate-200 focus:outline-none focus:border-indigo-500/50"
-                    value={newActivity.intensity}
-                    onChange={(e) => setNewActivity({...newActivity, intensity: e.target.value})}
+                    value={newActivity.activity_type}
+                    onChange={(e) => handleTypeChange(e.target.value)}
                   >
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
+                    {PREDEFINED_ACTIVITIES.map(type => (
+                      <option key={type} value={type} className="bg-slate-900">{type}</option>
+                    ))}
                   </select>
                 </div>
-              </div>
-              <Input 
-                label="Calories Burned" 
-                type="number"
-                value={newActivity.calories_burned}
-                onChange={(e) => setNewActivity({...newActivity, calories_burned: Number(e.target.value)})}
-              />
+              )}
+
+              {(isWaterIntake || isMeal) ? (
+                <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <Input 
+                    label={isWaterIntake ? "Amount" : "Quantity"}
+                    type="number" 
+                    value={newActivity.quantity || ''}
+                    onChange={(e) => setNewActivity({...newActivity, quantity: Number(e.target.value)})}
+                    required
+                  />
+                  <Input 
+                    label="Unit"
+                    placeholder={isWaterIntake ? "ml, oz" : "serving, bowl"}
+                    value={newActivity.unit || ''}
+                    onChange={(e) => setNewActivity({...newActivity, unit: e.target.value})}
+                    required
+                  />
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <Input 
+                    label="Duration (min)" 
+                    type="number" 
+                    value={newActivity.duration_minutes || ''}
+                    onChange={(e) => setNewActivity({...newActivity, duration_minutes: Number(e.target.value)})}
+                  />
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-500 uppercase">Intensity</label>
+                    <select 
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 h-11 text-slate-200 focus:outline-none focus:border-indigo-500/50"
+                      value={newActivity.intensity || ''}
+                      onChange={(e) => setNewActivity({...newActivity, intensity: e.target.value})}
+                    >
+                      <option value="Low" className="bg-slate-900">Low</option>
+                      <option value="Medium" className="bg-slate-900">Medium</option>
+                      <option value="High" className="bg-slate-900">High</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {!isWaterIntake && (
+                <Input 
+                  label="Calories Burned" 
+                  type="number"
+                  value={newActivity.calories_burned || ''}
+                  onChange={(e) => setNewActivity({...newActivity, calories_burned: Number(e.target.value)})}
+                />
+              )}
+
               <div className="flex space-x-3 pt-2">
                 <Button variant="secondary" className="flex-1" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
                 <Button type="submit" className="flex-1">Save Activity</Button>

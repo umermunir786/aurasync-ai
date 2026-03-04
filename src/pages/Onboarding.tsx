@@ -5,19 +5,34 @@ import { useAuth } from '../hooks/useAuth';
 import { AuthService } from '../services/AuthService';
 import { ActivityService } from '../services/ActivityService';
 import { 
-  User, 
+  User as UserIcon, 
   Scale, 
   Ruler, 
   Calendar as CalendarIcon, 
   Activity,
   ArrowRight,
-  ChevronLeft
+  ChevronLeft,
+  Flame,
+  Footprints,
+  Droplets,
+  Zap,
+  Star
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const steps = [
-  { id: 'profile', title: 'About You', description: 'Let\'s get to know your basic details.' },
-  { id: 'goals', title: 'Your Goals', description: 'What would you like to achieve?' },
+  { 
+    id: 'profile', 
+    title: 'About You', 
+    description: 'Let\'s get to know your basic details to personalize your experience.',
+    icon: <UserIcon size={32} />
+  },
+  { 
+    id: 'goals', 
+    title: 'Your Goals', 
+    description: 'What would you like to achieve? We\'ll help you track these daily.',
+    icon: <Star size={32} />
+  },
 ];
 
 const Onboarding: React.FC = () => {
@@ -31,7 +46,7 @@ const Onboarding: React.FC = () => {
     goals: {
       calories: 2000,
       steps: 10000,
-      water: 2
+      water: 2.5
     }
   });
 
@@ -71,8 +86,9 @@ const Onboarding: React.FC = () => {
       // Refresh user profile in state
       const updatedUser = await AuthService.getProfile();
       setUser(updatedUser);
-      window.location.href = '/dashboard'; // Hard reload to ensure state freshness
+      window.location.href = '/dashboard'; 
     } catch (err) {
+      console.error('Onboarding error:', err);
       alert('Failed to save your profile. Please try again.');
     } finally {
       setIsLoading(false);
@@ -80,26 +96,47 @@ const Onboarding: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/20 via-slate-950 to-slate-950">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center space-y-2">
-          <div className="inline-flex p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 mb-4">
-            <User size={32} />
+    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      {/* Background elements */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/20 via-slate-950 to-slate-950 pointer-events-none" />
+      <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-indigo-600/10 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[-5%] w-[40%] h-[40%] bg-cyan-600/10 blur-[120px] rounded-full pointer-events-none" />
+
+      <div className="max-w-xl w-full space-y-8 relative z-10">
+        <div className="text-center space-y-4">
+          <motion.div 
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="inline-flex p-4 rounded-3xl bg-gradient-to-tr from-indigo-600 to-cyan-500 shadow-lg shadow-indigo-500/20 text-white mb-2"
+          >
+            {steps[currentStep].icon}
+          </motion.div>
+          <div className="space-y-1">
+            <h1 className="text-4xl font-black text-white tracking-tight sm:text-5xl">
+              {steps[currentStep].title}
+            </h1>
+            <p className="text-slate-400 text-lg max-w-sm mx-auto">
+              {steps[currentStep].description}
+            </p>
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Welcome to JuraSync</h1>
-          <p className="text-slate-400">{steps[currentStep].description}</p>
         </div>
 
-        <div className="flex justify-center gap-2 mb-8">
+        {/* Progress Bar */}
+        <div className="flex justify-center gap-3 mb-4">
           {steps.map((_, idx) => (
             <div 
               key={idx} 
-              className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentStep ? 'w-8 bg-indigo-500' : 'w-2 bg-slate-800'}`}
+              className={`h-2 rounded-full transition-all duration-500 shadow-sm ${
+                idx === currentStep ? 'w-12 bg-indigo-500' : idx < currentStep ? 'w-4 bg-indigo-500/40' : 'w-4 bg-slate-800'
+              }`}
             />
           ))}
         </div>
 
-        <Card className="p-8 border-white/10" glass={true}>
+        <Card className="p-8 border-white/5 relative overflow-hidden" glass={true}>
+          {/* Subtle decoration inside card */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 blur-3xl rounded-full" />
+          
           <AnimatePresence mode="wait">
             {currentStep === 0 ? (
               <motion.div
@@ -107,58 +144,65 @@ const Onboarding: React.FC = () => {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="space-y-6"
+                transition={{ duration: 0.3 }}
+                className="space-y-8"
               >
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <Scale size={14} /> Weight (kg)
-                      </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2 ml-1">
+                      <Scale size={14} className="text-indigo-400" /> Weight (kg)
+                    </label>
+                    <div className="relative group">
                       <input 
                         type="number" 
                         value={formData.weight}
                         onChange={(e) => setFormData({...formData, weight: parseInt(e.target.value)})}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-bold text-lg group-hover:border-white/20"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <Ruler size={14} /> Height (cm)
-                      </label>
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2 ml-1">
+                      <Ruler size={14} className="text-indigo-400" /> Height (cm)
+                    </label>
+                    <div className="relative group">
                       <input 
                         type="number" 
                         value={formData.height}
                         onChange={(e) => setFormData({...formData, height: parseInt(e.target.value)})}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-bold text-lg group-hover:border-white/20"
                       />
                     </div>
                   </div>
+                </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <CalendarIcon size={14} /> Age
-                      </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2 ml-1">
+                      <CalendarIcon size={14} className="text-indigo-400" /> Age
+                    </label>
+                    <div className="relative group">
                       <input 
                         type="number" 
                         value={formData.age}
                         onChange={(e) => setFormData({...formData, age: parseInt(e.target.value)})}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-bold text-lg group-hover:border-white/20"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <Activity size={14} /> Gender
-                      </label>
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2 ml-1">
+                      <Activity size={14} className="text-indigo-400" /> Gender
+                    </label>
+                    <div className="relative group">
                       <select 
                         value={formData.gender}
                         onChange={(e) => setFormData({...formData, gender: e.target.value})}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium appearance-none"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-bold text-lg group-hover:border-white/20 appearance-none cursor-pointer"
                       >
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
+                        <option value="male" className="bg-slate-900">Male</option>
+                        <option value="female" className="bg-slate-900">Female</option>
+                        <option value="other" className="bg-slate-900">Other</option>
                       </select>
                     </div>
                   </div>
@@ -170,88 +214,97 @@ const Onboarding: React.FC = () => {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="space-y-6"
+                transition={{ duration: 0.3 }}
+                className="space-y-8"
               >
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                      <Flame size={14} className="text-orange-400" /> Daily Calories Goal
+                <div className="grid grid-cols-1 gap-6">
+                  <div className="p-6 rounded-3xl bg-orange-500/5 border border-orange-500/10 space-y-4">
+                    <label className="text-xs font-bold text-orange-400/70 uppercase tracking-[0.2em] flex items-center gap-2">
+                      <Flame size={18} /> Daily Calories Goal (kcal)
                     </label>
-                    <input 
-                      type="number" 
-                      value={formData.goals.calories}
-                      onChange={(e) => setFormData({
-                        ...formData, 
-                        goals: { ...formData.goals, calories: parseInt(e.target.value) }
-                      })}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
-                    />
+                    <div className="relative group">
+                      <input 
+                        type="number" 
+                        value={formData.goals.calories}
+                        onChange={(e) => setFormData({
+                          ...formData, 
+                          goals: { ...formData.goals, calories: parseInt(e.target.value) }
+                        })}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-all font-black text-2xl"
+                      />
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                      <Footprints size={14} className="text-indigo-400" /> Daily Steps Goal
+                  <div className="p-6 rounded-3xl bg-indigo-500/5 border border-indigo-500/10 space-y-4">
+                    <label className="text-xs font-bold text-indigo-400/70 uppercase tracking-[0.2em] flex items-center gap-2">
+                      <Footprints size={18} /> Daily Steps Goal
                     </label>
-                    <input 
-                      type="number" 
-                      value={formData.goals.steps}
-                      onChange={(e) => setFormData({
-                        ...formData, 
-                        goals: { ...formData.goals, steps: parseInt(e.target.value) }
-                      })}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
-                    />
+                    <div className="relative group">
+                      <input 
+                        type="number" 
+                        value={formData.goals.steps}
+                        onChange={(e) => setFormData({
+                          ...formData, 
+                          goals: { ...formData.goals, steps: parseInt(e.target.value) }
+                        })}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all font-black text-2xl"
+                      />
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                      <Droplets size={14} className="text-cyan-400" /> Daily Water (Liters)
+                  <div className="p-6 rounded-3xl bg-cyan-500/5 border border-cyan-500/10 space-y-4">
+                    <label className="text-xs font-bold text-cyan-400/70 uppercase tracking-[0.2em] flex items-center gap-2">
+                      <Droplets size={18} /> Daily Water Goal (Liters)
                     </label>
-                    <input 
-                      type="number" 
-                      step="0.1"
-                      value={formData.goals.water}
-                      onChange={(e) => setFormData({
-                        ...formData, 
-                        goals: { ...formData.goals, water: parseFloat(e.target.value) }
-                      })}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
-                    />
+                    <div className="relative group">
+                      <input 
+                        type="number" 
+                        step="0.1"
+                        value={formData.goals.water}
+                        onChange={(e) => setFormData({
+                          ...formData, 
+                          goals: { ...formData.goals, water: parseFloat(e.target.value) }
+                        })}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/30 transition-all font-black text-2xl"
+                      />
+                    </div>
                   </div>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
 
-          <div className="flex gap-4 mt-8">
+          <div className="flex gap-4 mt-10">
             {currentStep > 0 && (
               <Button 
                 variant="secondary" 
                 onClick={handleBack}
-                className="flex-1"
+                className="flex-1 py-4 !rounded-2xl border-white/5 hover:bg-white/10"
                 disabled={isLoading}
               >
-                <ChevronLeft size={18} className="mr-2" /> Back
+                <ChevronLeft size={20} className="mr-2" /> Back
               </Button>
             )}
             <Button 
               onClick={handleNext}
-              className="flex-1"
+              className="flex-[2] py-4 !rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 shadow-lg shadow-indigo-600/20 text-lg font-bold"
               isLoading={isLoading}
             >
-              {currentStep === steps.length - 1 ? 'Get Started' : 'Continue'}
-              <ArrowRight size={18} className="ml-2" />
+              {currentStep === steps.length - 1 ? 'Complete Setup' : 'Continue'}
+              <ArrowRight size={20} className="ml-2" />
             </Button>
           </div>
         </Card>
+
+        {currentStep === 0 && (
+          <p className="text-center text-slate-500 text-sm flex items-center justify-center gap-2">
+            <Zap size={14} className="text-yellow-500" />
+            Your data is used to calculate personalized health insights.
+          </p>
+        )}
       </div>
     </div>
   );
 };
-
-// Placeholder icons missing from lucide-react if any
-const Flame = ({ size, className }: any) => <Activity size={size} className={className} />;
-const Footprints = ({ size, className }: any) => <Activity size={size} className={className} />;
-const Droplets = ({ size, className }: any) => <Activity size={size} className={className} />;
 
 export default Onboarding;

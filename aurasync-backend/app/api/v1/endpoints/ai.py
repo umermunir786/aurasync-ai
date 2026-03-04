@@ -8,11 +8,12 @@ from google.genai import types
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app import crud, schemas
+from app import crud, schemas, models
 from app.core.config import settings
 from app.api import deps
-from app.crud import crud_nutrition, crud_activity_goal
+from app.crud import crud_nutrition, crud_activity_goal, crud_chat
 from app.schemas import activity_goal as activity_goal_schemas
+from app.schemas import chat as chat_schemas
 
 router = APIRouter()
 
@@ -164,31 +165,24 @@ def get_ai_recommendations(
             detail="Gemini API key not configured",
         )
 
-    # Fetch context data
-    nutrition_history = crud_nutrition.get_multi_by_user(db, user_id=current_user.id, limit=5)
-    activity_history = crud_activity_goal.get_activities_by_user(db, user_id=current_user.id, limit=5)
+    # Fetch context data - optimized to take only what's necessary
+    nutrition_history = crud_nutrition.get_multi_by_user(db, user_id=current_user.id, limit=3)
+    activity_history = crud_activity_goal.get_activities_by_user(db, user_id=current_user.id, limit=3)
     goals = crud_activity_goal.get_goals_by_user(db, user_id=current_user.id)
 
-    # Format data for prompt
-    nutrition_str = "\n".join([f"- {n.item_name}: {n.calories} kcal" for n in nutrition_history])
-    activity_str = "\n".join([f"- {a.activity_type}: {a.duration_minutes} min ({a.calories_burned} kcal burned)" for a in activity_history])
-    goals_str = "\n".join([f"- {g.goal_type}: {g.target_value} {g.unit} per {g.period}" for g in goals])
+    # Format data for prompt - more concise
+    nutrition_str = ",".join([f"{n.item_name}({n.calories}kcal)" for n in nutrition_history])
+    activity_str = ",".join([f"{a.activity_type}({a.duration_minutes}m)" for a in activity_history])
+    goals_str = ",".join([f"{g.goal_type}:{g.target_value}{g.unit}" for g in goals])
 
     try:
         prompt = f"""
-        You are a health and nutrition assistant. Based on the following user data, provide 3 concise, personalized health recommendations.
+        Health Assistant. User Data:
+        Nutrition: {nutrition_str or "None"}
+        Activity: {activity_str or "None"}
+        Goals: {goals_str or "None"}
         
-        Recent Nutrition Logs:
-        {nutrition_str if nutrition_str else "No recent scans."}
-        
-        Recent Activity Logs:
-        {activity_str if activity_str else "No recent activities."}
-        
-        User Goals:
-        {goals_str if goals_str else "No specific goals set yet."}
-        
-        Return ONLY a JSON array of 3 strings.
-        Example: ["You should increase your protein intake based on your recent workouts.", "Consider a 15-min walk after your next big meal.", "You are close to your calorie goal for today!"]
+        Return ONLY 3 personalized health advice strings in a JSON array.
         """
         response = client.models.generate_content(model='gemini-flash-latest', contents=prompt)
         content = response.text.strip()
@@ -214,6 +208,27 @@ def get_ai_recommendations(
 class ChatRequest(BaseModel):
     message: str
 
+@router.get("/chat/history", response_model=List[chat_schemas.ChatMessage])
+def get_chat_history(
+    db: Session = Depends(deps.get_db),
+    current_user: Any = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Retrieve user's chat history (not cleared)
+    """
+    return crud_chat.get_chat_history(db, user_id=current_user.id)
+
+@router.post("/chat/clear")
+def clear_chat(
+    db: Session = Depends(deps.get_db),
+    current_user: Any = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Clear chat history for the user (UI only)
+    """
+    crud_chat.clear_chat_history(db, user_id=current_user.id)
+    return {"msg": "Chat history cleared"}
+
 @router.post("/chat")
 def chat_with_coach(
     request: ChatRequest,
@@ -229,30 +244,56 @@ def chat_with_coach(
             detail="Gemini API key not configured",
         )
 
-    # Fetch context data for the chat
+    # Save user message
+    crud_chat.create_chat_message(
+        db, 
+        obj_in=chat_schemas.ChatMessageCreate(role="user", content=request.message),
+        user_id=current_user.id
+    )
+
+    # Fetch context data for the chat (health metrics)
     nutrition_history = crud_nutrition.get_multi_by_user(db, user_id=current_user.id, limit=5)
     activity_history = crud_activity_goal.get_activities_by_user(db, user_id=current_user.id, limit=5)
     goals = crud_activity_goal.get_goals_by_user(db, user_id=current_user.id)
 
-    # Format data
+    # Fetch recent chat history for conversation context (including cleared for AI memory)
+    # The user wants AI to "remember all chat", so we fetch recent history from DB.
+    chat_history = db.query(models.chat.ChatMessage).filter(
+        models.chat.ChatMessage.user_id == current_user.id
+    ).order_by(models.chat.ChatMessage.created_at.desc()).limit(10).all()
+    chat_history.reverse()
+
+    # Format data more concisely
     context = f"""
-    User Context:
-    - Nutrition History (Last 5): {", ".join([f"{n.item_name} ({n.calories} kcal)" for n in nutrition_history])}
-    - Activity History (Last 5): {", ".join([f"{a.activity_type} ({a.duration_minutes} min)" for a in activity_history])}
-    - Goals: {", ".join([f"{g.goal_type}: {g.target_value} {g.unit}" for g in goals])}
+    Context:
+    Food(last3): {", ".join([f"{n.item_name}({n.calories}kcal)" for n in nutrition_history[:3]])}
+    Acts(last3): {", ".join([f"{a.activity_type}({a.duration_minutes}m)" for a in activity_history[:3]])}
+    Goals: {", ".join([f"{g.goal_type}:{g.target_value}{g.unit}" for g in goals])}
+    
+    ChatHistory:
+    {chr(10).join([f"{m.role}:{m.content}" for m in chat_history])}
     """
 
     try:
         prompt = f"""
         You are AuraSync AI, a friendly and highly knowledgeable health coach. 
-        Use the following user data to provide specific, encouraging advice.
+        Use the following user data and previous conversation to provide specific, encouraging advice.
         
         {context}
         
         User's question: {request.message}
         """
         response = client.models.generate_content(model='gemini-flash-latest', contents=prompt)
-        return {"reply": response.text.strip()}
+        bot_reply = response.text.strip()
+
+        # Save assistant response
+        crud_chat.create_chat_message(
+            db, 
+            obj_in=chat_schemas.ChatMessageCreate(role="assistant", content=bot_reply),
+            user_id=current_user.id
+        )
+
+        return {"reply": bot_reply}
 
     except Exception as e:
         logger.error(f"AI Chat error: {str(e)}")
@@ -260,6 +301,23 @@ def chat_with_coach(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to chat: {str(e)}",
         )
+
+@router.post("/chat/recommendation")
+def save_recommendation_as_message(
+    *,
+    db: Session = Depends(deps.get_db),
+    recommendation: str,
+    current_user: Any = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Save a recommendation as an AI message in the chat history
+    """
+    crud_chat.create_chat_message(
+        db, 
+        obj_in=chat_schemas.ChatMessageCreate(role="assistant", content=recommendation),
+        user_id=current_user.id
+    )
+    return {"msg": "Recommendation saved to chat"}
 
 @router.delete("/reset-data")
 def reset_user_data(

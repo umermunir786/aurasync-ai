@@ -1,5 +1,19 @@
 import api from '../api/axios';
 
+export type GoalType = 'Calories' | 'Steps' | 'Water' | 'Exercise' | 'Sleep';
+
+export interface Activity {
+  id: string;
+  activity_type: string;
+  duration_minutes?: number;
+  intensity?: string;
+  calories_burned?: number;
+  quantity?: number;
+  unit?: string;
+  created_at: string;
+  image_url?: string;
+}
+
 export interface ActivityLog {
   activity_type: string;
   duration_minutes: number;
@@ -51,6 +65,10 @@ export const ActivityService = {
   async getRecommendations(): Promise<string[]> {
     const response = await api.get<{ recommendations: string[] }>('/ai/recommendations');
     return response.data.recommendations;
+  },
+
+  async saveRecommendationToChat(recommendation: string): Promise<void> {
+    await api.post(`/ai/chat/recommendation?recommendation=${encodeURIComponent(recommendation)}`);
   },
   
   async resetData(): Promise<{ msg: string }> {

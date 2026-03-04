@@ -1,12 +1,13 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useLocation } from 'react-router-dom'
 
 import RemyButton from './RemyButton'
 
 import { useState } from 'react'
-import { Globe, Home, Menu, X } from 'lucide-react'
+import { Globe, Home, Menu, X, Sparkles, Crown } from 'lucide-react'
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
+  const location = useLocation()
 
   return (
     <>
@@ -47,13 +48,41 @@ export default function Header() {
 
         <nav className="flex-1 p-4 overflow-y-auto">
           <Link
+            to="/ai-chat"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-indigo-600/20 to-cyan-600/20 border border-white/5 hover:border-indigo-500/30 transition-all group mb-4 relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="p-2 bg-gradient-to-tr from-indigo-600 to-cyan-500 rounded-lg text-white shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform">
+              <Sparkles size={18} />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-semibold text-white group-hover:text-indigo-300 transition-colors">AI Health Coach</span>
+              <span className="text-[10px] text-slate-400">Personalized Insights</span>
+            </div>
+          </Link>
+
+          <Link
+            to="/pricing"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-amber-600/10 to-yellow-600/10 border border-amber-500/20 hover:border-amber-500/40 transition-all group mb-4 relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="p-2 bg-gradient-to-tr from-amber-600 to-yellow-500 rounded-lg text-white shadow-lg shadow-amber-500/20 group-hover:scale-110 transition-transform">
+              <Crown size={18} />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-semibold text-white group-hover:text-amber-300 transition-colors">Go Pro</span>
+              <span className="text-[10px] text-slate-400">Unlock All Features</span>
+            </div>
+          </Link>
+
+          <Link
             to="/"
             onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
-            activeProps={{
-              className:
-                'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
-            }}
+            className={`flex items-center gap-3 p-3 rounded-lg transition-colors mb-2 ${
+              location.pathname === '/' ? 'bg-cyan-600 hover:bg-cyan-700' : 'hover:bg-gray-800'
+            }`}
           >
             <Home size={20} />
             <span className="font-medium">Home</span>
@@ -64,11 +93,9 @@ export default function Header() {
           <Link
             to="/schedule"
             onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
-            activeProps={{
-              className:
-                'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
-            }}
+            className={`flex items-center gap-3 p-3 rounded-lg transition-colors mb-2 ${
+              location.pathname === '/schedule' ? 'bg-cyan-600 hover:bg-cyan-700' : 'hover:bg-gray-800'
+            }`}
           >
             <Globe size={20} />
             <span className="font-medium">Schedule</span>
@@ -77,11 +104,9 @@ export default function Header() {
           <Link
             to="/speakers"
             onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
-            activeProps={{
-              className:
-                'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
-            }}
+            className={`flex items-center gap-3 p-3 rounded-lg transition-colors mb-2 ${
+              location.pathname === '/speakers' ? 'bg-cyan-600 hover:bg-cyan-700' : 'hover:bg-gray-800'
+            }`}
           >
             <Globe size={20} />
             <span className="font-medium">Speakers</span>
@@ -90,11 +115,9 @@ export default function Header() {
           <Link
             to="/talks"
             onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
-            activeProps={{
-              className:
-                'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
-            }}
+            className={`flex items-center gap-3 p-3 rounded-lg transition-colors mb-2 ${
+              location.pathname === '/talks' ? 'bg-cyan-600 hover:bg-cyan-700' : 'hover:bg-gray-800'
+            }`}
           >
             <Globe size={20} />
             <span className="font-medium">Sessions</span>

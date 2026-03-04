@@ -1,5 +1,6 @@
-from pydantic import BaseModel, EmailStr, ConfigDict # Pydantic v2 way to handle SQLAlchemy models
+from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional
+from datetime import datetime
 
 # Base Schema (Common fields)
 class UserBase(BaseModel):
@@ -12,6 +13,8 @@ class UserBase(BaseModel):
     height: Optional[int] = None
     age: Optional[int] = None
     gender: Optional[str] = None
+    subscription_tier: Optional[str] = "free"
+    subscription_end_date: Optional[datetime] = None
 
 class UserCreate(UserBase): # Create User (For signup)
     email: EmailStr

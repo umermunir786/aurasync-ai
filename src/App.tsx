@@ -1,7 +1,9 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import LoadingSpinner from './components/ui/LoadingSpinner';
 import PrivateRoute from './components/layout/PrivateRoute';
 import DashboardLayout from './components/layout/DashboardLayout';
+import PageLoader from './components/ui/PageLoader';
 
 // Lazy load pages
 const Landing = lazy(() => import('./pages/Landing'));
@@ -18,6 +20,7 @@ const Settings = lazy(() => import('./pages/Settings'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const VisionNutrition = lazy(() => import('./pages/VisionNutrition'));
 const Onboarding = lazy(() => import('./pages/Onboarding'));
+const Pricing = lazy(() => import('./pages/Pricing'));
 import { useAuth } from './hooks/useAuth';
 import { AuthService } from './services/AuthService';
 
@@ -52,16 +55,26 @@ const App: React.FC = () => {
       }
     };
     initServices();
+
+    // Hash routing handling
+    const handleHash = () => {
+      // Removed forced redirects to allow natural hash scrolling on landing page
+    };
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
   }, [isAuthenticated, setUser]);
 
   return (
     <BrowserRouter>
-      <Suspense fallback={<div className="flex items-center justify-center h-screen bg-slate-900 text-white">Loading...</div>}>
+      <PageLoader />
+      <Suspense fallback={<LoadingSpinner fullScreen message="Loading AuraSync..." />}>
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/pricing" element={<Suspense fallback={<LoadingSpinner />}><Pricing /></Suspense>} />
           
           <Route element={<PrivateRoute />}>
             <Route element={<DashboardLayout />}>
@@ -74,7 +87,7 @@ const App: React.FC = () => {
               <Route path="/settings" element={<Settings />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/vision-nutrition" element={<VisionNutrition />} />
-              <Route path="/onboarding" element={<Onboarding />} />
+              <Route path="/onboarding" element={<Suspense fallback={<LoadingSpinner />}><Onboarding /></Suspense>} />
             </Route>
           </Route>
 

@@ -96,51 +96,84 @@ const VisionNutrition: React.FC = () => {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white">AI Vision Nutrition</h1>
+          <h1 className="text-3xl font-bold text-white tracking-tight">AI Vision Nutrition</h1>
           <p className="text-slate-400">Scan your meal for instant macro breakdown</p>
         </div>
-        <Button onClick={handleCapture} disabled={isAnalyzing} className="h-12 px-8">
+        <Button onClick={handleCapture} disabled={isAnalyzing} className="h-12 px-8 shadow-lg shadow-indigo-500/20">
           {isAnalyzing ? <Loader2 className="mr-2 animate-spin" /> : <CameraIcon className="mr-2" />}
           Capture Meal
         </Button>
       </div>
 
       {!results && !isAnalyzing && (
-        <Card className="flex flex-col items-center justify-center py-20 border-dashed border-2 border-white/5 bg-white/[0.02]">
-          <div className="w-20 h-20 rounded-full bg-indigo-500/10 flex items-center justify-center mb-6 text-indigo-400">
-            <CameraIcon size={40} />
+        <Card className="flex flex-col items-center justify-center py-24 border-dashed border-2 border-white/5 bg-white/[0.02] backdrop-blur-xl">
+          <div className="w-24 h-24 rounded-[32px] bg-gradient-to-tr from-indigo-500/10 to-cyan-500/10 flex items-center justify-center mb-8 text-indigo-400 shadow-2xl">
+            <CameraIcon size={48} />
           </div>
-          <h3 className="text-xl font-bold mb-2">Ready to scan?</h3>
-          <p className="text-slate-400 text-center max-w-sm">
+          <h3 className="text-2xl font-bold text-white mb-3">Ready to scan?</h3>
+          <p className="text-slate-400 text-center max-w-sm leading-relaxed">
             Hold your camera steady over your food and press the button above to analyze your meal.
           </p>
         </Card>
       )}
 
-      {isAnalyzing && (
-        <Card className="flex flex-col items-center justify-center py-20 bg-white/[0.02]">
+      {isAnalyzing && currentImageUrl && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <Card className="lg:col-span-2 p-0 overflow-hidden bg-slate-900/50 backdrop-blur-xl border-white/10 relative">
+            <div className="aspect-video w-full relative">
+              <img src={currentImageUrl} alt="Meal Preview" className="w-full h-full object-cover brightness-50" />
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <Loader2 size={64} className="text-indigo-500 animate-spin mb-6" />
+                <h3 className="text-2xl font-bold text-white mb-2 animate-pulse">AI is Analyzing...</h3>
+                <p className="text-slate-200/70">Identifying food items and portion sizes</p>
+              </div>
+            </div>
+          </Card>
+          <div className="space-y-6">
+            <Card className="animate-pulse h-64 bg-white/5 border-white/10"><></></Card>
+            <Card className="animate-pulse h-48 bg-white/5 border-white/10"><></></Card>
+          </div>
+        </div>
+      )}
+
+      {isAnalyzing && !currentImageUrl && (
+        <Card className="flex flex-col items-center justify-center py-20 bg-white/[0.02] backdrop-blur-xl">
           <Loader2 size={48} className="text-indigo-500 animate-spin mb-6" />
-          <h3 className="text-xl font-bold mb-2 animate-pulse">AI is Analyzing...</h3>
-          <p className="text-slate-400">Identifying food items and estimating portion sizes.</p>
+          <h3 className="text-xl font-bold mb-2 animate-pulse">Initializing Capture...</h3>
         </Card>
       )}
 
       <AnimatePresence>
         {results && (
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             className="grid grid-cols-1 lg:grid-cols-3 gap-8"
           >
             {/* Analysis details */}
             <div className="lg:col-span-2 space-y-6">
-              <Card className="p-0 overflow-hidden">
-                <div className="p-6 border-b border-white/5 flex items-center justify-between bg-indigo-500/5">
-                  <h3 className="font-bold flex items-center">
+              {currentImageUrl && (
+                <Card className="p-0 overflow-hidden border-white/10 shadow-2xl">
+                  <div className="aspect-video w-full relative group">
+                    <img src={currentImageUrl} alt="Analyzed Meal" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+                    <div className="absolute bottom-6 left-6">
+                      <div className="flex items-center space-x-2 text-white bg-indigo-600/80 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
+                        <Sparkles size={12} />
+                        <span>AI Verified Meal</span>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              <Card className="p-0 overflow-hidden bg-slate-900/40 backdrop-blur-xl border-white/10 shadow-xl">
+                <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.03]">
+                  <h3 className="font-bold flex items-center text-white">
                     <Sparkles size={18} className="mr-2 text-indigo-400" />
-                    Analysis Results
+                    Macro Breakdown
                   </h3>
-                  <span className="text-xs font-black text-indigo-400 uppercase tracking-widest">
+                  <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
                     High Confidence
                   </span>
                 </div>

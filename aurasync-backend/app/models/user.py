@@ -17,3 +17,5 @@ class User(Base):
     height = Column(Integer, nullable=True) # in cm
     age = Column(Integer, nullable=True)
     gender = Column(String, nullable=True)
+    subscription_tier = Column(String, default="free")
+    subscription_end_date = Column(DateTime, nullable=True)
