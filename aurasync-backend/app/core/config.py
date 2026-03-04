@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     
     # CORS Origins (Should be a list of URLs or a comma separated string)
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
+    BACKEND_CORS_ORIGINS: List[str] = []
 
     # Database
     DATABASE_URL: Optional[str] = "sqlite:///./sql_app.db"
