@@ -41,9 +41,9 @@ const App: React.FC = () => {
           await StatusBar.setStyle({ style: Style.Dark });
           await StatusBar.setBackgroundColor({ color: '#020617' });
           await SplashScreen.hide();
+          await SocialAuthService.init();
+          await SubscriptionService.init();
         }
-        await SocialAuthService.init();
-        await SubscriptionService.init();
         
         // Sync profile if authenticated
         if (isAuthenticated) {
