@@ -12,14 +12,17 @@ app = FastAPI(
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # CORS Settings (To allow frontend connections)
-if settings.BACKEND_CORS_ORIGINS:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[str(origin).rstrip("/") for origin in settings.BACKEND_CORS_ORIGINS] if settings.BACKEND_CORS_ORIGINS else ["*"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+# If BACKEND_CORS_ORIGINS is ["*"], we can't use allow_credentials=True in standard FastAPI/Starlette
+# So we handle that logic here
+cors_origins = [str(origin).rstrip("/") for origin in settings.BACKEND_CORS_ORIGINS] if settings.BACKEND_CORS_ORIGINS else []
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins if cors_origins else ["*"],
+    allow_credentials=True if cors_origins and "*" not in cors_origins else False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # All routes are included here
 app.include_router(api_router, prefix=settings.API_V1_STR)
